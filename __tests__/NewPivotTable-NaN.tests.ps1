@@ -27,8 +27,8 @@ East,Maine,20,661.24
 Describe "Tests New PSPivotTable Null Measures" -Tag NewPSPivotTableNaN {
     It "Tests NaN for Average Aggregation" -TestCases @(
         @{dataSet = $global:nullUnitsData; expectedUnits = $true; expectedPrice = $false ; aggregateFunction = 'average' }
-        @{dataSet = $global:nullFirstUnitData; expectedUnits = $false; expectedPrice = $false ; aggregateFunction = 'average' }
-        @{dataSet = $global:nullSecondUnitData; expectedUnits = $false; expectedPrice = $false ; aggregateFunction = 'average' }
+        @{dataSet = $global:nullFirstUnitData; expectedUnits = $true; expectedPrice = $false ; aggregateFunction = 'average' }
+        @{dataSet = $global:nullSecondUnitData; expectedUnits = $true; expectedPrice = $false ; aggregateFunction = 'average' }
     ) {
         param(
             $dataSet,

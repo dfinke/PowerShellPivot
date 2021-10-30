@@ -1,24 +1,16 @@
 # The sum of the data divided by the number of data points
 class Average : BaseStats {
-    hidden $Sum
-    hidden $Count
+    hidden [double[]]$numList
 
     Average() {}
-    Average([double]$n) { 
-        $this.Sum = $n
-        $this.Count = 1 
-    }
+    Average([double]$n) { $this.numList = $n }
     
     AddToMeasure([double]$n) {
-        if ([double]::IsNaN($n) -eq $false) {
-            $this.sum = $this.ConvertNaNToNumber($this.sum) 
-            $this.sum += $n
-        }
-     
-        $this.count++
+        $this.numList += $n
     }
 
-    [double]Result() {
-        return [math]::Round($this.sum / $this.count, 3)
+    [double]Result() {        
+        $result = [MathNet.Numerics.Statistics.Statistics]::Mean($this.numList)
+        return [Math]::Round($result, 3)
     }
 }
