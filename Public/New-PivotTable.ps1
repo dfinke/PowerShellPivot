@@ -22,15 +22,15 @@ function New-PSPivotTable {
     
     End {
         $boundParameters = @{} + $PSBoundParameters    
-        if ($index.Count -ge 2) {
-            "Multiple indexes not yet implemented"
-            return $null
-        }
+        # if ($index.Count -ge 2) {
+        #     "Multiple indexes not yet implemented"
+        #     return $null
+        # }
 
-        if ($column) {
-            "Column dimensions not yet implemented"
-            return $null
-        }
+        # if ($column) {
+        #     "Column dimensions not yet implemented"
+        #     return $null
+        # }
 
         if ($boundParameters.Keys.Count -eq 1 -and $boundParameters.Contains("InputObject")) { return $null }
         if ($null -eq $data) { return $null }
@@ -51,7 +51,7 @@ function New-PSPivotTable {
         }
 
         $aggregateFunction = [string[]]$aggregateFunction
-        if ($index.Count -eq 1 -and $null -eq $values) {
+        if ($index.Count -ge 1 -and $null -eq $values) {
             $numberProperties = Get-AllDataTypes $data | Where-Object { $_.DataType -match '^(int|float|double)$' } 
             $values = @($numberProperties.Name)
         }
