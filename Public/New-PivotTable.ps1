@@ -94,19 +94,21 @@ function New-PSPivotTable {
             }
 
             foreach ($propertyName in $values) {
-                # foreach ($propertyName in $values | Sort-Object) {
+                
                 foreach ($aggregation in $aggregateFunction) {
                     $pn = "$($aggregation)_$($propertyName)"
-                    # $pn = $propertyName
                     $measure = $record.$propertyName
+                    
                     if ([string]::IsNullOrEmpty($measure)) {
                         $measure = $Fill
                     }
 
                     if ($null -eq $currentKey.$pn) {
+                        $measure = ConvertFrom-IntPtr $measure
                         $currentKey.$pn = New-Object $aggregation -ArgumentList $measure
                     }
                     else {
+                        $measure = ConvertFrom-IntPtr $measure
                         $currentKey.$pn.AddToMeasure($measure)
                     }
                 }
@@ -133,5 +135,19 @@ function New-PSPivotTable {
         else {        
             doFmt $result
         }
+    }
+}
+
+function ConvertFrom-IntPtr {
+    param(
+        [Parameter(Mandatory)]
+        $measure
+    )
+
+    if ($measure -is [IntPtr]) {
+        $measure.ToInt32() -as [double]
+    }
+    else {
+        $measure
     }
 }
