@@ -6,7 +6,7 @@
     RootModule         = 'PowerShellPivot.psm1'
 
     # Version number of this module.
-    ModuleVersion      = '0.7.0'
+    ModuleVersion      = '0.7.1'
 
     # ID used to uniquely identify this module
     GUID               = '1cda4a74-bf30-4619-b22a-5b682b19a45b'
@@ -60,10 +60,10 @@ PowerShell module to reshape data (produce a "pivot" table) based on column valu
             #IconUri = "http://pesterbdd.com/images/Pester.png"
 
             # The web address of this module's project or support homepage.
-            ProjectUri   = "https://github.com/dfinke/PSPivotTable"
+            ProjectUri   = "https://github.com/dfinke/PowerShellPivot"
 
             # The web address of this module's license. Points to a page that's embeddable and linkable.
-            LicenseUri   = "https://github.com/dfinke/PSPivotTable/blob/master/LICENSE.txt"
+            LicenseUri   = "https://github.com/dfinke/PowerShellPivot/blob/master/LICENSE.txt"
 
             # Release notes for this particular version of the module
             #ReleaseNotes = $True
