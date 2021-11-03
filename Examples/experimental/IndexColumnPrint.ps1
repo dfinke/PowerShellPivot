@@ -2,7 +2,10 @@
 Import-Module ./powershellpivot.psd1 -Force
 
 function PrintPivotBasics {
-    param($pivotData)
+    param(
+        $pivotData,
+        $fill = [double]::nan
+    )
 
     $keys = $pivotData.Keys -ne 'metadata'
 
@@ -43,7 +46,7 @@ function PrintPivotBasics {
         
         foreach ($item in $lookup) {
             if (!$pivotData[$key].Contains($item)) {
-                $p += @("{0,$($lookupMax)}" -f [double]::NaN)
+                $p += @("{0,$($lookupMax)}" -f $fillValue)
             }
             else {
                 $p += @("{0,$($lookupMax)}" -f $pivotData[$key][$item].Values.Result())
