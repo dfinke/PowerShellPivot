@@ -39,6 +39,12 @@ Register-ArgumentCompleter -CommandName New-PSPivotTable -ParameterName aggregat
     }
 }
 
+Register-ArgumentCompleter -CommandName New-MiniPivot -ParameterName AggregationFunction -ScriptBlock {
+    foreach ($aggregateFunction in Get-AggregateFunctionNames | Sort-Object) {        
+        [System.Management.Automation.CompletionResult]::new($aggregateFunction, $aggregateFunction, 'ParameterValue', $aggregateFunction)
+    }
+}
+
 Add-Type -Path "$PSScriptRoot\lib\MathNet.Numerics.dll"
 
 # import everything we need

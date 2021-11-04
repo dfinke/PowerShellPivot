@@ -10,6 +10,7 @@ class Mean : BaseStats {
     }
 
     [double]Result() {
-        return [MathNet.Numerics.Statistics.Statistics]::Mean($this.numList)
+        $result = [MathNet.Numerics.Statistics.Statistics]::Mean($this.numList)
+        return [Math]::Round($result, 3)
     }
 }

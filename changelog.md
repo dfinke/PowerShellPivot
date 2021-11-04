@@ -1,3 +1,5 @@
+# v0.7.2
+- Added `Mini-PivotTable`
 # v0.7.0
 - Refactored classes
 - Added Stats `Count`, `GeometricMean`, `LowerQuartile`, `Mean`, `Min`, `STD`, `UpperQuartile`, `Average`, `Entropy`, `HarmonicMean`, `Max`, `Median`, `RootMeanSquare`, `Sum`, `Variance`
