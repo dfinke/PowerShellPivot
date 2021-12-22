@@ -1,7 +1,7 @@
 $PSVersionTable
 
 # $modules = @("Pester", "PSScriptAnalyzer")
-$modules = @( "PSScriptAnalyzer")
+$modules = @()
 
 foreach ($module in $modules) {
     Write-Host "Installing $module" -ForegroundColor Cyan
