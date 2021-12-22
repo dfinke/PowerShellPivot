@@ -1,4 +1,121 @@
-function Out-Cell{
+using namespace "Microsoft.DotNet.Interactive"
+
+function Write-Notebook {
+    [cmdletbinding(DefaultParameterSetName='Html')]
+    param   (
+        [parameter(Mandatory=$true,ParameterSetName='Html',ValueFromPipeline=$true,Position=1 )]
+        $Html,
+
+        [parameter(Mandatory=$true,ParameterSetName='Text')]
+        $Text,
+
+        [Alias('PT')]
+        [switch]$PassThru
+    )
+    begin   {$htmlbody = @()}
+    process {if ($html) {$htmlbody += $Html}}
+    end     {
+        if ($htmlbody.count -gt 0)  {$result = [Kernel]::display([Kernel]::HTML($htmlbody),'text/html')  }
+        if ($Text)                  {$result = [Kernel]::display($Text,                    'text/plain') }
+        if ($PassThru)              {return $result}
+    }
+}
+
+function ConvertTo-Grid {
+    param   (
+        [parameter(ValueFromPipeline=$true, Position=0, Mandatory=$true)]
+        $InputObject,
+
+        # .Net formatting string to apply to floating point numbers; default is N2 i.e. #,###.00
+        [string]$FloatFormat         = 'N2',
+
+        # .Net formatting string to apply to integers; default is N0 i.e. #,###
+        [string]$IntFormat           = 'N0',
+
+        #A title to appear above the grid, centred in H1 style
+        [string]$TitleText,
+
+        #css for the grid background and padding: default is middle grey and 5 pixels padding
+        [string]$GridStyle           = 'background-color: #7f7f7f; padding: 5px;',
+
+        #css for alternating light and dark rows. to remove dark rows use an empty string
+        [string]$DarkRowStyle        = 'background-color: rgba(255, 255, 255, 0.8);',
+
+        #css for normal cells in the grid
+        [string]$ItemStyle           = 'text-align: center; background-color: white; border: 1px solid rgba(0, 0, 0, 0.8); padding: 8px; font-size: 16px;' ,
+
+        #css for normal cells in the grid, default is left aligned, bold white text on black background,
+        [string]$ColumnHeadingStyle  = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
+
+        #css for normal cells in the grid
+        [string]$RowLablelStyle  = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
+
+        #Outputs the grid instead of returning the html
+        [switch]$Display,
+
+        [Parameter(Position=1)]
+        $Property,
+        $ExcludeProperty,
+        [switch]$Unique,
+        [int32]$Last,
+        [int32]$First,
+        [int32]$Skip
+    )
+
+    begin   {
+        $rows = @()
+        $html = @('<style>' ,"    .grid-container {display: grid; grid-template-columns: auto auto auto; $gridStyle}" ,
+                             "    .grid-item {$ItemStyle}", '</style>') -join "`r`n"
+    }
+    process {$rows += $InputObject}
+    end     {
+        if  ($rows.count -eq 0) {return}
+
+        $selectParams  = @{}
+        foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', 'Skip')){
+            if  ($PSBoundParameters.ContainsKey($param)) {$selectParams[$param] = $PSBoundParameters[$param]}
+        }
+        if      ($selectParams.Count -ge 1) {$rows = $rows | Select-Object @selectParams }
+
+        $properties    =  $rows[0].psobject.Properties.name
+
+        if ($TitleText) {
+            $html     += "`r`n<center><h1>$TitleText</h1></center>"
+        }
+        $html         += "`r`n<div class=`"grid-container`" style=`"grid-template-columns:$(' auto' * $properties.Count);`" >"
+        foreach ($p in $properties) {
+            $html     += "`r`n     <div class=`"grid-item`" style=`"$ColumnHeadingStyle`">$p</div>"
+        }
+        $html         += "`r`n"
+        $rowcount = 0
+        foreach ($r in $rows) {
+            $rowstyle = $rowcount ++ % 2 ? $DarkRowStyle : ""
+            foreach ($p in $properties) {
+                if ($null -eq $r.$p) {
+                    $html += "`r`n     <div class=`"grid-item`" style=`"$rowstyle`"></div>"
+                    continue
+                }
+                if     ($r.$p.GetType().name -match 'int') {
+                                                $itemStyle = $rowstyle + "text-align: right;";  $itemText = $r.$p.tostring($IntFormat)
+                }
+                elseif ($r.$p -is [Single] -or
+                        $r.$p -is [double])    {$itemStyle = $rowstyle + "text-align: right;";  $itemText = $r.$p.tostring($FloatFormat)}
+                elseif ($r.$p -is [boolean])   {$itemStyle = $rowstyle + "text-align: center;"; $itemText = $r.$p.tostring()  }
+                elseif ($r.$p -is [enum])      {$itemStyle = $rowstyle + "text-align: left;";   $itemText = $r.$p.tostring()  }
+                elseif ($r.$p -is [ValueType]) {$itemStyle = $rowstyle + "text-align: right;";  $itemText = $r.$p.tostring() }
+                elseif ($r.$p -is [string])    {$itemStyle = $rowstyle + "text-align: left;";   $itemText = $r.$p }
+                elseif ($r.$p -is [string])    {$itemStyle = $rowstyle + "text-align: left;";   $itemText = $r.$p.toString() }
+                $html += "`r`n     <div class=`"grid-item`" style=`"$itemStyle`">$itemText</div>"
+            }
+            $html     += "`r`n"
+        }
+        $html         += "</div>"
+        if   ($Display) {Write-Notebook -Html $html }
+        else {$html}
+    }
+}
+
+function Out-Cell       {
     <#
         .synopsis
             Outputs a notebook cell - takes a script block, or html or objects to format as a list/table
@@ -26,9 +143,10 @@ function Out-Cell{
     [alias("cell")]
     param   (
         [Parameter(ParameterSetName='Default', Mandatory=$true, Position=0, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='List',    Mandatory=$true, Position=1, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='Table',   Mandatory=$true, Position=1, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='Text',    Mandatory=$true, Position=1, ValueFromPipeline=$true )]
+        [Parameter(ParameterSetName='List',    Mandatory=$true, Position=0, ValueFromPipeline=$true )]
+        [Parameter(ParameterSetName='Table',   Mandatory=$true, Position=0, ValueFromPipeline=$true )]
+        [Parameter(ParameterSetName='Grid',    Mandatory=$true, Position=0, ValueFromPipeline=$true )]
+        [Parameter(ParameterSetName='Text',    Mandatory=$true, Position=0, ValueFromPipeline=$true )]
         $InputObject,
 
         [Parameter(ParameterSetName='List',    Mandatory=$true)]
@@ -39,28 +157,39 @@ function Out-Cell{
         [Alias('Table')]
         [switch]$AsTable,
 
+        [Parameter(ParameterSetName='Grid',    Mandatory=$true)]
+        [switch]$AsGrid,
+
+        [Parameter(ParameterSetName='Grid')]
+        [hashtable]$GridOptions,
+
         [Parameter(ParameterSetName='Text',    Mandatory=$true)]
         [Alias('Text')]
         [switch]$AsText,
 
-        [Parameter(ParameterSetName='Table',Position=0)]
-        [Parameter(ParameterSetName='List' ,Position=0)]
+        [Parameter(ParameterSetName='Table',Position=1)]
+        [Parameter(ParameterSetName='List' ,Position=1)]
+        [Parameter(ParameterSetName='Grid' ,Position=1)]
         $Property,
 
         [Parameter(ParameterSetName='Table')]
         [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Grid')]
         [string[]]$ExcludeProperty,
 
         [Parameter(ParameterSetName='Table')]
         [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Grid')]
         [int32]$First,
 
         [Parameter(ParameterSetName='Table')]
         [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Grid')]
         [int32]$Last,
 
         [Parameter(ParameterSetName='Table')]
         [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Grid')]
         [int32]$Skip,
 
         [switch]$PassThru
@@ -77,10 +206,9 @@ function Out-Cell{
     end     {
         if     ($AsText) {
             $t = $data | Out-String
-            $d = [Microsoft.DotNet.Interactive.Kernel]::display($t.Trim(),"text/plain")
-            if ($passThru) {return $d} else {return}
+            Write-Notebook -Text $t.Trim() -PassThru:$PassThru
         }
-        elseif (-not ($AsTable -or $AsList)) {
+        elseif (-not ($AsTable -or $AsList -or $AsGrid)) {
             $html = $data -join ""
         }
         else {
@@ -92,19 +220,20 @@ function Out-Cell{
                 }
                 $data = $data | Select-Object @selectParams
             }
-
-            if ($AsList) {$html = $data | ConvertTo-Html -Fragment -As "List"}
-            else         {$html = $data | ConvertTo-Html -Fragment -As "Table"}
+            if ($GridOptions) {$html = $data | ConvertTo-Grid @GridOptions}
+            elseif  ($AsGrid) {$html = $data | ConvertTo-Grid }
+            elseif  ($AsList) {$html = $data | ConvertTo-Html -Fragment -As "List"}
+            else              {$html = $data | ConvertTo-Html -Fragment -As "Table"}
         }
-        [Microsoft.DotNet.Interactive.Kernel]::HTML($html) | Out-Display -passthru:$PassThru
+        Write-Notebook -Html $html -PassThru:$PassThru
     }
 }
 
 function Write-Progress {
-<#
-    .SYNOPSIS
+    <#
+      .SYNOPSIS
         Notebook friendly replacement for the Write-Progress cmdlet. Similar to the "Minimal" view implemented in PowerShell 7.2
-#>
+    #>
     param (
         [Parameter(Mandatory=$true,position = 0)]
         [string]$Activity,
@@ -115,25 +244,25 @@ function Write-Progress {
         [int]$SecondsRemaining,
         [switch]$Completed
     )
-    if ($status)            {$bar = "{0,-100}"  -f $Status}
-    else                    {$bar = "{0,-100}"  -f $CurrentOperation} #even if it is empty!
-    if ($PercentComplete)   {$bar = $PSStyle.Background.blue + $PSStyle.Foreground.BrightWhite +
+    if ($status)           {$bar  = "{0,-100}"  -f $Status}
+    else                   {$bar  = "{0,-100}"  -f $CurrentOperation} #even if it is empty!
+    if ($PercentComplete)  {$bar  = $PSStyle.Background.blue + $PSStyle.Foreground.BrightWhite +
                                     ($bar -replace "(?<=^.{$percentComplete})", ($PSStyle.Reset + $PSStyle.Foreground.blue))
     }
-    if ($SecondsRemaining) {$bar +=  $SecondsRemaining.tostring("0s") }
-    if ($Completed)        {$bar = ' '}
-    else                   {$bar = $PSStyle.Foreground.blue + $Activity +  "[" + $bar + "]" + $PSStyle.Reset}
+    if ($SecondsRemaining) {$bar += $SecondsRemaining.tostring("0s") }
+    if ($Completed)        {$bar  = ' '}
+    else                   {$bar  = $PSStyle.Foreground.blue + $Activity +  "[" + $bar + "]" + $PSStyle.Reset}
 
-    if ($global:ProgressBar -and $global:contextID -eq  [Microsoft.DotNet.Interactive.KernelInvocationContext]::Current.Command.Properties.id) {
+    if ($global:ProgressBar -and $global:contextID -eq  [KernelInvocationContext]::Current.Command.Properties.id) {
         $global:ProgressBar.Update($bar)
     }
     else {
-        $global:ProgressBar = $bar | Out-Display -PassThru -MimeType text/plain
-        $global:contextID   =  [Microsoft.DotNet.Interactive.KernelInvocationContext]::Current.Command.Properties.id
+        $global:ProgressBar =  Write-Notebook -Text $bar -PassThru
+        $global:contextID   =  [KernelInvocationContext]::Current.Command.Properties.id
     }
 }
 
-function Out-Mermaid {
+function Out-Mermaid    {
     <#
       .DESCRIPTION
         Accepts a mermaid chart definition as a parameter (example with the definition) or from the  pipeline
@@ -160,11 +289,11 @@ function Out-Mermaid {
         Outputs a sample diagram found on the mermaid home page
     #>
     [alias('Mermaid')]
-    param (
+    param   (
         [parameter(ValueFromPipeline=$true,Mandatory=$true,Position=0)]
         $Text
     )
-    begin {
+    begin   {
         $mermaid = ""
         $guid    = ([guid]::NewGuid().ToString() -replace '\W','')
         $html    = @"
@@ -181,11 +310,11 @@ else {loadMermaid_$guid();}
 </script><div id="$guid"></div></div>
 "@  }
     process {$Mermaid +=  ("`r`n" + $Text -replace '^[\r\n]+','' -replace '[\r\n]+$','') }
-    end     {[Microsoft.DotNet.Interactive.Kernel]::HTML(($html -replace  '~~Mermaid~~',$mermaid ))  | Out-Display }
+    end     {Write-Notebook -Html  ($html -replace  '~~Mermaid~~',$mermaid ) }
 }
 
-function Out-TreeView {
-<#
+function Out-TreeView   {
+    <#
       .SYNOPSIS
         Outputs a treeview to a notebook.
 
@@ -221,7 +350,7 @@ function Out-TreeView {
 
       .PARAMETER TitleHtml
         The title to be included - formatted as HTML
-#>
+    #>
     param   (
         [Parameter(Position=0, ValueFromPipeline=$true, Mandatory=$true)]
         $InputObject,
@@ -250,7 +379,7 @@ function Out-TreeView {
     process { $rows += $InputObject}
     end     {
         $selectParams = @{}
-        foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', $Skip)){
+        foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', 'Skip')){
             if ($PSBoundParameters.ContainsKey($param)) {$selectParams[$param] = $PSBoundParameters[$param]}
         }
         if     ($selectParams.Count -ge 1) {$rows = $rows | Select-Object @selectParams }
@@ -268,7 +397,7 @@ function Out-TreeView {
             $outputHtml += "</tr>"
         }
         $outputHtml += "`r`n  </tbody>`r`n</table></div></details>`r`n"
-        if ($Display) {[Microsoft.DotNet.Interactive.Kernel]::HTML(($outputHtml + $treeViewCss))  | Out-Display}
-        else          {[Microsoft.DotNet.Interactive.Kernel]::HTML( $outputHtml)  }
+        if ($Display) {Write-Notebook -Html ($outputHtml + $treeViewCss) }
+        else          {[Kernel]::HTML( $outputHtml)  }
     }
 }
