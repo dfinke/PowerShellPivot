@@ -36,10 +36,10 @@ Date,Name,Customer,Revenue,Expenses
     }
 
     It "Tests patterns for -ExcludeProperty" {
-        
+
         # Excludes Name,Customer,Revenue,Expenses
-        $actual = $data | psm -ExcludeProperty me, en
-        
+        $actual = $data | psm -ExcludeProperty *me*, *en*
+
         $actual.Count | Should -Be 3
     }
 }

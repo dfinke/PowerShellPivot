@@ -43,7 +43,7 @@ function New-PSPivotTable {
         }
 
         if ($boundParameters.Keys.Count -eq 1 -and $boundParameters.Contains("InputObject")) { return $null }
-        if ($null -eq $data) { return $null }
+        if ($data.Count -eq 0 ) { return $null }
 
         $propertyNames = $data[0].psobject.properties.name
         [System.Collections.ArrayList]$values = $values
