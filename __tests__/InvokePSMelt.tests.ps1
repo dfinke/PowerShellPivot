@@ -11,7 +11,7 @@ Florida,0,14,190
     }
 
     It "Tests defaults via -InputObject" {
-        $actual = Invoke-PSMelt -InputObject $data | sort variable,value
+        $actual = Invoke-PSMelt -InputObject $data | Sort-Object variable,value
 
         $actual.Count | Should -Be 12
         <#
