@@ -1,6 +1,31 @@
 using namespace "Microsoft.DotNet.Interactive"
 
 function Write-Notebook {
+    <#
+      .SYNOPSIS
+        Writes to  the output part of the current cell (a streamlined version of Out-Display)
+
+      .PARAMETER Html
+        Output to be sent as Hmtl
+
+      .PARAMETER Text
+        Output to be sent as plain text
+
+      .PARAMETER PassThru
+        If specified returns the output object, allowing it to be updated.
+
+      .EXAMPLE
+        > $statusMsg = Write-Notebook -PassThru -text  "Step 1"
+        > ...
+        > $statusmsg.update("Step2")
+
+        Displays and updates text in the current cell output
+
+      .EXAMPLE
+        >  $PSVersionTable | ConvertTo-Html -Fragment | Write-Notebook
+
+        Converts $psversionTable to a table and displays it. Without Write-Notebook the HTML markup would appear.
+    #>
     [cmdletbinding(DefaultParameterSetName='Html')]
     param   (
         [parameter(Mandatory=$true,ParameterSetName='Html',ValueFromPipeline=$true,Position=1 )]
@@ -50,18 +75,28 @@ function ConvertTo-Grid {
         #css for normal cells in the grid
         [string]$RowLablelStyle  = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
 
-        #Outputs the grid instead of returning the html
+        #Displays the grid in the output of the notebook cell, instead of returning the html
         [switch]$Display,
 
+        #Specifies the properties to select. Wildcards are permitted.
         [Parameter(Position=1)]
         $Property,
+
+        #Specifies the properties that the selection process excludes from the operation. Wildcards are permitted.
         $ExcludeProperty,
+
+        #Specifies that if a subset of the input objects has identical properties and values, only a single member of the subset will be selected. Unique selects values after other filtering parameters are applied.
         [switch]$Unique,
+
+        #Specifies the number of objects to select from the end of an array of input objects.
         [int32]$Last,
+
+        #Specifies the number of objects to select from the beginning of an array of input objects.
         [int32]$First,
+
+        #Skips (does not select) the specified number of items. By default, the Skip parameter counts from the beginning of the array or list of objects, but if the command uses the Last parameter, it counts from the end of the list or array.
         [int32]$Skip
     )
-
     begin   {
         $rows = @()
         $html = @('<style>' ,"    .grid-container {display: grid; grid-template-columns: auto auto auto; $gridStyle}" ,
@@ -117,27 +152,92 @@ function ConvertTo-Grid {
 
 function Out-Cell       {
     <#
-        .synopsis
-            Outputs a notebook cell - takes a script block, or html or objects to format as a list/table
-        .description
-            This command has three ways of working. It can
-            * Take HTML (via the pipeline or as a parameter) and output it into a cell
-            * Make an HTML table or list from objects, selecting properties, first, last etc.
-            * Take a script block to generate html or objects to transform to a list/table
-        .example
-        > Get-command -Module  Microsoft.DotNet.Interactive.PowerShell | Out-Cell -AsTable name,version
+      .SYNOPSIS
+        Outputs a notebook cell - takes a script block, or html or objects to format as a list/table
+
+      .DESCRIPTION
+        This command has four ways of working. It can
+        * Take HTML (via the pipeline or as a parameter) and output it into a cell
+        * Make an HTML grid, table or list from objects, selecting properties, first, last etc.
+        * Render objects as text (using Out-String)
+        * Take a script block to generate html or objects to transform to a list/table
+
+      .PARAMETER InputObject
+        Specifies the objects to format, or HTML or a script block to excecute to generate the rquired output
+
+      .PARAMETER AsGrid
+        Specifies the object sould be output as an HTML grid (this uses ConvertTo-Grid )
+
+      .PARAMETER GridOption
+        Specifies additional options for ConvertTo-Grid when using -AsGrid
+
+      .PARAMETER AsList
+        Specifies the object sould be output as an HTML list (this uses ConvertTo-Html -Fragment -As "Grid" internaly)
+
+      .PARAMETER AsTable
+        Specifies the object sould be output as an HTML table (this uses ConvertTo-Html -Fragment -As Table internaly)
+
+      .PARAMETER AsText
+        Specifies the object sould be output as text (Similar to using Out-String, optionally combined with select-object)
+
+      .PARAMETER Property
+        Specifies the properties to select. Wildcards are permitted. Property, ExcludeProperty, Unique, Last, First and Skip work as they do with Select-Object (the function calls Select-object with these parameters),
+
+      .PARAMETER ExcludeProperty
+        Specifies the properties that the selection process excludes from the operation. Wildcards are permitted.
+
+      .PARAMETER Unique
+        Specifies that if a subset of the input objects has identical properties and values, only a single member of the subset will be selected. Unique selects values after other filtering parameters are applied.
+
+      .PARAMETER Last
+        Specifies the number of objects to select from the end of an array of input objects.
+
+      .PARAMETER First
+        Specifies the number of objects to select from the beginning of an array of input objects.
+
+      .PARAMETER Skip
+        Skips (does not select) the specified number of items. By default, the Skip parameter counts from the beginning of the array or list of objects, but if the command uses the Last parameter, it counts from the end of the list or array.
+
+
+      .EXAMPLE
+        > Get-command -Module  Microsoft.DotNet.Interactive.PowerShell | Out-Cell -AsTable -Property name,version
 
         Takes CommandInfo objects and displays their name and version as an HTML Table
-        .example
-        > Cell -AsList name,version { Get-command -Module  Microsoft.DotNet.Interactive.PowerShell }
+        ---------------------------
+        | Name	        | Version |
+        ---------------------------
+        | Enter-AzShell | 0.1.0   |
+        | Out-Display	| 0.1.0   |
+        ---------------------------
+
+
+      .EXAMPLE
+        > Get-command -Module  Microsoft.DotNet.Interactive.PowerShell | Out-Cell -AsText -Property name,version
+
+        Renders the output as console-style text
+            Name          Version
+            ----          -------
+            Enter-AzShell 0.1.0
+            Out-Display   0.1.0
+
+      .EXAMPLE
+        > Cell { Get-command -Module  Microsoft.DotNet.Interactive.PowerShell } -AsList name,version
 
         Similar to the previous object this uses the alias "cell" and uses a script block to create
         the objects and formats their name and version as an HTML List
-        .example
+        ----------------------------
+        | Name:    | Enter-AzShell |
+        | Version: | 0.1.0         |
+        ----------------------------
+        | Name:	   | Out-Display   |
+        | Version: |	0.1.0      |
+        ----------------------------
+
+      .EXAMPLE
         > cell  {plot_pipeline FollowOn.pipeline.yml  -DestinationPath "" }
 
         In this example, `plot_pipeline` reads a yml file and draws a simple SVG graph.
-}
+        Out-cell will assume the script block is creating HTML because it has not been told  as a list, table or grid
     #>
     [cmdletbinding(DefaultParameterSetName="Default")]
     [alias("cell")]
@@ -167,29 +267,34 @@ function Out-Cell       {
         [Alias('Text')]
         [switch]$AsText,
 
-        [Parameter(ParameterSetName='Table',Position=1)]
-        [Parameter(ParameterSetName='List' ,Position=1)]
         [Parameter(ParameterSetName='Grid' ,Position=1)]
+        [Parameter(ParameterSetName='List' ,Position=1)]
+        [Parameter(ParameterSetName='Table',Position=1)]
+        [Parameter(ParameterSetName='Text' ,Position=1)]
         $Property,
 
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='List')]
         [Parameter(ParameterSetName='Grid')]
+        [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Table')]
+        [Parameter(ParameterSetName='Text')]
         [string[]]$ExcludeProperty,
 
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='List')]
         [Parameter(ParameterSetName='Grid')]
+        [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Table')]
+        [Parameter(ParameterSetName='Text')]
         [int32]$First,
 
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='List')]
         [Parameter(ParameterSetName='Grid')]
+        [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Table')]
+        [Parameter(ParameterSetName='Text')]
         [int32]$Last,
 
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='List')]
         [Parameter(ParameterSetName='Grid')]
+        [Parameter(ParameterSetName='List')]
+        [Parameter(ParameterSetName='Table')]
+        [Parameter(ParameterSetName='Text')]
         [int32]$Skip,
 
         [switch]$PassThru
@@ -204,12 +309,9 @@ function Out-Cell       {
         else {  $data += $InputObject }
     }
     end     {
-        if     ($AsText) {
-            $t = $data | Out-String
-            Write-Notebook -Text $t.Trim() -PassThru:$PassThru
-        }
-        elseif (-not ($AsTable -or $AsList -or $AsGrid)) {
-            $html = $data -join ""
+        # if we're not told to render as something assume we've recieved HTML
+        if (-not ($AsGrid -or $AsList -or $AsTable -or $AsText)) {
+                $html = $data -join ""
         }
         else {
             $selectParameterNames = @("First","Last","Skip","Property","ExcludeProperty")
@@ -223,7 +325,12 @@ function Out-Cell       {
             if ($GridOptions) {$html = $data | ConvertTo-Grid @GridOptions}
             elseif  ($AsGrid) {$html = $data | ConvertTo-Grid }
             elseif  ($AsList) {$html = $data | ConvertTo-Html -Fragment -As "List"}
-            else              {$html = $data | ConvertTo-Html -Fragment -As "Table"}
+            elseif ($AsTable) {$html = $data | ConvertTo-Html -Fragment -As "Table"}
+            elseif  ($AsText) {
+                $t = $data | Out-String
+                Write-Notebook -Text $t.Trim() -PassThru:$PassThru
+                return
+            }
         }
         Write-Notebook -Html $html -PassThru:$PassThru
     }
@@ -325,7 +432,7 @@ function Out-TreeView   {
         Specifies the objects to format. Enter a variable that contains the objects, or type a command or expression that gets the objects.
 
       .PARAMETER Property
-        Specifies the properties to select. Wildcards are permitted.
+        Specifies the properties to select. Wildcards are permitted. Property, ExcludeProperty, Unique, Last, First and Skip work as they do with Select-Object (the function calls Select-object with these parameters),
 
       .PARAMETER ExcludeProperty
         Specifies the properties that the selection process excludes from the operation. Wildcards are permitted.
@@ -350,6 +457,57 @@ function Out-TreeView   {
 
       .PARAMETER TitleHtml
         The title to be included - formatted as HTML
+
+      .EXAMPLE
+        >  $Sales       = Import-Csv .\SalesByEmployee.csv
+        >  Out-TreeView $sales.where({$_.name -eq 'Jim'}) -TitleHtml '<b>Jim</b>' -ExcludeProperty Name -Display
+
+        Selects the sales for a single employee and displays
+        > Jim
+        Clicking the arrow expands this to
+        \/ Jim
+            ---------------------------------------------
+            | Date	 | Customer	   | Revenue | Expenses |
+            ---------------------------------------------
+            | 1/1/20 | PaperGenius |    1864 |     1305 |
+            | 2/2/20 | Money Corp. |    8278 |      462 |
+            ---------------------------------------------
+
+      .EXAMPLE
+          > $groupby      = 'Name'
+          > $groupedSales =  Import-Csv .\SalesByEmployee.csv | Group-object -Property $groupby
+          > $subtrees     = foreach ($g in $groupedSales) {
+          >      [pscustomobject]@{$groupBy =  (Out-TreeView $g.Group -TitleHtml $g.Name)}
+          >  }
+          >  $subtrees  | Out-TreeView -Title Sales -Display
+
+           Here the sales are grouped and the for loop greates a subtree for each Name
+           The subtrees are gathered together in a parent tree labelled sales.
+           By specifying that each tree is "name" property of an object. (Which might have have other properties)
+           When the Sales tree expands we have a column "Name" which contains trees like the ones in the first example
+           Initiallly it displays
+           >  Sales
+
+           Clicking on the arrow expands this to
+           \/ Sales
+                  Name
+               >  Alex
+               >  Jim
+               >  Phil
+
+            Clicking one of the Name arrows expands to
+           \/ Sales
+                  Name
+               >  Alex
+               \/ Jim
+                    ---------------------------------------------
+                    | Date	 | Customer	   | Revenue | Expenses |
+                    ---------------------------------------------
+                    | 1/1/20 | PaperGenius |    1864 |     1305 |
+                    | 2/2/20 | Money Corp. |    8278 |      462 |
+                    ---------------------------------------------
+               >  Phil
+
     #>
     param   (
         [Parameter(Position=0, ValueFromPipeline=$true, Mandatory=$true)]
