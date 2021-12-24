@@ -11,59 +11,61 @@ Florida,0,14,190
     }
 
     It "Tests defaults via -InputObject" {
-        $actual = Invoke-PSMelt -InputObject $data
+        $actual = Invoke-PSMelt -InputObject $data | Sort-Object variable,value
 
         $actual.Count | Should -Be 12
         <#
             variable value
             -------- -----
-            State    Texas
+            Apple    0
+            Apple    9
+            Apple    12
+            Banana   12
+            Banana   40
+            Banana   190
+            Orange   7
+            Orange   10
+            Orange   14
+
             State    Arizona
             State    Florida
-            Apple    12
-            Apple    9
-            Apple    0
-            Orange   10
-            Orange   7
-            Orange   14
-            Banana   40
-            Banana   12
-            Banana   190
-        #>
-        $names = $actual[0].psobject.properties.name        
+            State    Texas
+                    #>
+        $names = $actual[0].psobject.properties.name
         $names.Count | Should -Be 2
 
         $names[0] | Should -BeExactly "variable"
         $names[1] | Should -BeExactly "value"
 
-        $actual[0].variable | Should -BeExactly "State"
-        $actual[0].value | Should -BeExactly "Texas"
-        $actual[1].variable | Should -BeExactly "State"
-        $actual[1].value | Should -BeExactly "Arizona"
-        $actual[2].variable | Should -BeExactly "State"
-        $actual[2].value | Should -BeExactly "Florida"
-        $actual[3].variable | Should -BeExactly "Apple"
-        $actual[3].value | Should -BeExactly "12"
-        $actual[4].variable | Should -BeExactly "Apple"
-        $actual[4].value | Should -BeExactly "9"
-        $actual[5].variable | Should -BeExactly "Apple"
-        $actual[5].value | Should -BeExactly "0"
+        $actual[11].variable | Should -BeExactly "State"
+        $actual[11].value | Should -BeExactly "Texas"
+        $actual[10].variable | Should -BeExactly "State"
+        $actual[10].value | Should -BeExactly "Florida"
+        $actual[9].variable | Should -BeExactly "State"
+        $actual[9].value | Should -BeExactly "Arizona"
+        $actual[8].variable | Should -BeExactly "Orange"
+        $actual[8].value | Should -BeExactly "7"
+        $actual[7].variable | Should -BeExactly "Orange"
+        $actual[7].value | Should -BeExactly "14"
         $actual[6].variable | Should -BeExactly "Orange"
         $actual[6].value | Should -BeExactly "10"
-        $actual[7].variable | Should -BeExactly "Orange"
-        $actual[7].value | Should -BeExactly "7"
-        $actual[8].variable | Should -BeExactly "Orange"
-        $actual[8].value | Should -BeExactly "14"
-        $actual[9].variable | Should -BeExactly "Banana"
-        $actual[9].value | Should -BeExactly "40"
-        $actual[10].variable | Should -BeExactly "Banana"
-        $actual[10].value | Should -BeExactly "12"
-        $actual[11].variable | Should -BeExactly "Banana"
-        $actual[11].value | Should -BeExactly "190"            
+        $actual[5].variable | Should -BeExactly "Banana"
+        $actual[5].value | Should -BeExactly "40"
+        $actual[4].variable | Should -BeExactly "Banana"
+        $actual[4].value | Should -BeExactly "190"
+        $actual[3].variable | Should -BeExactly "Banana"
+        $actual[3].value | Should -BeExactly "12"
+        $actual[2].variable | Should -BeExactly "Apple"
+        $actual[2].value | Should -BeExactly "9"
+        $actual[1].variable | Should -BeExactly "Apple"
+        $actual[1].value | Should -BeExactly "12"
+        $actual[0].variable | Should -BeExactly "Apple"
+        $actual[0].value | Should -BeExactly "0"
+
     }
 
-    It "Tests defaults via piping" {        
-        $actual = $data | Invoke-PSMelt 
+    It "Tests defaults via piping" {
+        $actual = $data | Invoke-PSMelt
 
         $actual.Count | Should -Be 12
         <#
@@ -83,16 +85,16 @@ Florida,0,14,190
             Banana   190
         #>
 
-        $names = $actual[0].psobject.properties.name        
+        $names = $actual[0].psobject.properties.name
         $names.Count | Should -Be 2
 
         $names[0] | Should -BeExactly "variable"
         $names[1] | Should -BeExactly "value"
-        
+
         $actual[0].variable | Should -BeExactly "State"
         $actual[0].value | Should -BeExactly "Texas"
         $actual[1].variable | Should -BeExactly "Apple"
-        $actual[1].value | Should -BeExactly "12"        
+        $actual[1].value | Should -BeExactly "12"
         $actual[2].variable | Should -BeExactly "Orange"
         $actual[2].value | Should -BeExactly "10"
         $actual[3].variable | Should -BeExactly "Banana"
@@ -139,7 +141,7 @@ Shiela,Graduate,21
             Age          21
         #>
 
-        $names = $actual[0].psobject.properties.name        
+        $names = $actual[0].psobject.properties.name
         $names.Count | Should -Be 2
 
         $names[0] | Should -BeExactly "PropertyName"
@@ -187,7 +189,7 @@ Shiela,Graduate,21
             Shiela Age      21
         #>
 
-        $names = $actual[0].psobject.properties.name        
+        $names = $actual[0].psobject.properties.name
         $names.Count | Should -Be 3
 
         $names[0] | Should -BeExactly "Name"
@@ -246,7 +248,7 @@ Shiela,Graduate,21
         $actual[1].value | Should -BeExactly "Graduate"
         $actual[2].Name | Should -BeExactly "Shiela"
         $actual[2].variable | Should -BeExactly "Course"
-        $actual[2].value | Should -BeExactly "Graduate"        
+        $actual[2].value | Should -BeExactly "Graduate"
     }
 
     It "Tests Id and 'Age' Var" {
@@ -330,12 +332,12 @@ Shiela,Graduate,21
         $actual[4].value | Should -BeExactly "Graduate"
         $actual[5].Name | Should -BeExactly "Shiela"
         $actual[5].variable | Should -BeExactly "Age"
-        $actual[5].value | Should -BeExactly "21"        
+        $actual[5].value | Should -BeExactly "21"
     }
 
     It "Tests an array for the Id parameter" {
         $data = Import-Csv "$PSScriptRoot\SalesByEmployee.csv"
-        $actual = Invoke-PSMelt -InputObject $data Date, Name, Customer
+        $actual = Invoke-PSMelt -InputObject $data Date, Name, Customer  | Sort-Object name,variable,customer
 
         $actual.Count | Should -Be 52
 
@@ -358,35 +360,35 @@ Shiela,Graduate,21
         $names[3] | Should -Be "variable"
         $names[4] | Should -Be "value"
 
-        $actual[0].date | Should -Be "1/1/20"
-        $actual[0].name | Should -Be "Oscar"
-        $actual[0].customer | Should -Be "Logistics XYZ"
-        $actual[0].variable | Should -Be "Revenue"
-        $actual[0].value | Should -Be "5250"
+        $actual[-6].date | Should -Be "1/1/20"
+        $actual[-6].name | Should -Be "Oscar"
+        $actual[-6].customer | Should -Be "Logistics XYZ"
+        $actual[-6].variable | Should -Be "Revenue"
+        $actual[-6].value | Should -Be "5250"
 
-        $actual[1].date | Should -Be "1/1/20"
-        $actual[1].name | Should -Be "Oscar"
-        $actual[1].customer | Should -Be "Money Corp."
-        $actual[1].variable | Should -Be "Revenue"
-        $actual[1].value | Should -Be "4406"
+        $actual[-5].date | Should -Be "1/1/20"
+        $actual[-5].name | Should -Be "Oscar"
+        $actual[-5].customer | Should -Be "Money Corp."
+        $actual[-5].variable | Should -Be "Revenue"
+        $actual[-5].value | Should -Be "4406"
 
-        $actual[2].date | Should -Be "1/2/20"
-        $actual[2].name | Should -Be "Oscar"
-        $actual[2].customer | Should -Be "PaperMaven"
-        $actual[2].variable | Should -Be "Revenue"
-        $actual[2].value | Should -Be "8661"
- 
-        $actual[3].date | Should -Be "1/3/20"
-        $actual[3].name | Should -Be "Oscar"
-        $actual[3].customer | Should -Be "PaperGenius"
-        $actual[3].variable | Should -Be "Revenue"
-        $actual[3].value | Should -Be "7075"
+        $actual[-1].date | Should -Be "1/2/20"
+        $actual[-1].name | Should -Be "Oscar"
+        $actual[-1].customer | Should -Be "PaperMaven"
+        $actual[-1].variable | Should -Be "Revenue"
+        $actual[-1].value | Should -Be "8661"
 
-        $actual[4].date | Should -Be "1/4/20"
-        $actual[4].name | Should -Be "Oscar"
-        $actual[4].customer | Should -Be "Paper Pound"
-        $actual[4].variable | Should -Be "Revenue"
-        $actual[4].value | Should -Be "2524"        
+        $actual[-2].date | Should -Be "1/3/20"
+        $actual[-2].name | Should -Be "Oscar"
+        $actual[-2].customer | Should -Be "PaperGenius"
+        $actual[-2].variable | Should -Be "Revenue"
+        $actual[-2].value | Should -Be "7075"
+
+        $actual[-3].date | Should -Be "1/4/20"
+        $actual[-3].name | Should -Be "Oscar"
+        $actual[-3].customer | Should -Be "Paper Pound"
+        $actual[-3].variable | Should -Be "Revenue"
+        $actual[-3].value | Should -Be "2524"
     }
 
     It "Tests an array for the Id parameter and the Vars a single property" {
@@ -441,7 +443,7 @@ Shiela,Graduate,21
         $actual[4].Name | Should -Be "Oscar"
         $actual[4].Customer | Should -Be "Paper Pound"
         $actual[4].variable | Should -Be "Revenue"
-        $actual[4].value | Should -Be "2524"        
+        $actual[4].value | Should -Be "2524"
     }
 
     It "Tests an array ofr Id and the Vars single property and rename var, val properties" {
@@ -472,7 +474,7 @@ Shiela,Graduate,21
     It 'Tests null InputObject should not throw' {
         Invoke-PSMelt -InputObject $nullData | Should -Be $null
     }
-    
+
     It 'Tests piping null InputObject should not throw' {
         $nullData | Invoke-PSMelt $nullData | Should -Be $null
     }
