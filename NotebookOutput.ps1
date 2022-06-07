@@ -1,7 +1,12 @@
+<#
+  Thank you to James O'Neill for contributing this script.
+  Some really cool functions that can take your PowerShell .NET Interative notebooks to the next level.
+#>
+
 using namespace "Microsoft.DotNet.Interactive"
 
 function Write-Notebook {
-    <#
+  <#
       .SYNOPSIS
         Writes to  the output part of the current cell (a streamlined version of Out-Display)
 
@@ -26,132 +31,132 @@ function Write-Notebook {
 
         Converts $psversionTable to a table and displays it. Without Write-Notebook the HTML markup would appear.
     #>
-    [cmdletbinding(DefaultParameterSetName='Html')]
-    param   (
-        [parameter(Mandatory=$true,ParameterSetName='Html',ValueFromPipeline=$true,Position=1 )]
-        $Html,
+  [cmdletbinding(DefaultParameterSetName = 'Html')]
+  param   (
+    [parameter(Mandatory = $true, ParameterSetName = 'Html', ValueFromPipeline = $true, Position = 1 )]
+    $Html,
 
-        [parameter(Mandatory=$true,ParameterSetName='Text')]
-        $Text,
+    [parameter(Mandatory = $true, ParameterSetName = 'Text')]
+    $Text,
 
-        [Alias('PT')]
-        [switch]$PassThru
-    )
-    begin   {$htmlbody = @()}
-    process {if ($html) {$htmlbody += $Html}}
-    end     {
-        if ($htmlbody.count -gt 0)  {$result = [Kernel]::display([Kernel]::HTML($htmlbody),'text/html')  }
-        if ($Text)                  {$result = [Kernel]::display($Text,                    'text/plain') }
-        if ($PassThru)              {return $result}
-    }
+    [Alias('PT')]
+    [switch]$PassThru
+  )
+  begin { $htmlbody = @() }
+  process { if ($html) { $htmlbody += $Html } }
+  end {
+    if ($htmlbody.count -gt 0) { $result = [Kernel]::display([Kernel]::HTML($htmlbody), 'text/html') }
+    if ($Text) { $result = [Kernel]::display($Text, 'text/plain') }
+    if ($PassThru) { return $result }
+  }
 }
 
 function ConvertTo-Grid {
-    param   (
-        [parameter(ValueFromPipeline=$true, Position=0, Mandatory=$true)]
-        $InputObject,
+  param   (
+    [parameter(ValueFromPipeline = $true, Position = 0, Mandatory = $true)]
+    $InputObject,
 
-        # .Net formatting string to apply to floating point numbers; default is N2 i.e. #,###.00
-        [string]$FloatFormat         = 'N2',
+    # .Net formatting string to apply to floating point numbers; default is N2 i.e. #,###.00
+    [string]$FloatFormat = 'N2',
 
-        # .Net formatting string to apply to integers; default is N0 i.e. #,###
-        [string]$IntFormat           = 'N0',
+    # .Net formatting string to apply to integers; default is N0 i.e. #,###
+    [string]$IntFormat = 'N0',
 
-        #A title to appear above the grid, centred in H1 style
-        [string]$TitleText,
+    #A title to appear above the grid, centred in H1 style
+    [string]$TitleText,
 
-        #css for the grid background and padding: default is middle grey and 5 pixels padding
-        [string]$GridStyle           = 'background-color: #7f7f7f; padding: 5px;',
+    #css for the grid background and padding: default is middle grey and 5 pixels padding
+    [string]$GridStyle = 'background-color: #7f7f7f; padding: 5px;',
 
-        #css for alternating light and dark rows. to remove dark rows use an empty string
-        [string]$DarkRowStyle        = 'background-color: rgba(255, 255, 255, 0.8);',
+    #css for alternating light and dark rows. to remove dark rows use an empty string
+    [string]$DarkRowStyle = 'background-color: rgba(255, 255, 255, 0.8);',
 
-        #css for normal cells in the grid
-        [string]$ItemStyle           = 'text-align: center; background-color: white; border: 1px solid rgba(0, 0, 0, 0.8); padding: 8px; font-size: 16px;' ,
+    #css for normal cells in the grid
+    [string]$ItemStyle = 'text-align: center; background-color: white; border: 1px solid rgba(0, 0, 0, 0.8); padding: 8px; font-size: 16px;' ,
 
-        #css for normal cells in the grid, default is left aligned, bold white text on black background,
-        [string]$ColumnHeadingStyle  = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
+    #css for normal cells in the grid, default is left aligned, bold white text on black background,
+    [string]$ColumnHeadingStyle = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
 
-        #css for normal cells in the grid
-        [string]$RowLablelStyle  = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
+    #css for normal cells in the grid
+    [string]$RowLablelStyle = 'text-align: left;   background-color: black; color: white; font-weight: bold;',
 
-        #Displays the grid in the output of the notebook cell, instead of returning the html
-        [switch]$Display,
+    #Displays the grid in the output of the notebook cell, instead of returning the html
+    [switch]$Display,
 
-        #Specifies the properties to select. Wildcards are permitted.
-        [Parameter(Position=1)]
-        $Property,
+    #Specifies the properties to select. Wildcards are permitted.
+    [Parameter(Position = 1)]
+    $Property,
 
-        #Specifies the properties that the selection process excludes from the operation. Wildcards are permitted.
-        $ExcludeProperty,
+    #Specifies the properties that the selection process excludes from the operation. Wildcards are permitted.
+    $ExcludeProperty,
 
-        #Specifies that if a subset of the input objects has identical properties and values, only a single member of the subset will be selected. Unique selects values after other filtering parameters are applied.
-        [switch]$Unique,
+    #Specifies that if a subset of the input objects has identical properties and values, only a single member of the subset will be selected. Unique selects values after other filtering parameters are applied.
+    [switch]$Unique,
 
-        #Specifies the number of objects to select from the end of an array of input objects.
-        [int32]$Last,
+    #Specifies the number of objects to select from the end of an array of input objects.
+    [int32]$Last,
 
-        #Specifies the number of objects to select from the beginning of an array of input objects.
-        [int32]$First,
+    #Specifies the number of objects to select from the beginning of an array of input objects.
+    [int32]$First,
 
-        #Skips (does not select) the specified number of items. By default, the Skip parameter counts from the beginning of the array or list of objects, but if the command uses the Last parameter, it counts from the end of the list or array.
-        [int32]$Skip
-    )
-    begin   {
-        $rows = @()
-        $html = @('<style>' ,"    .grid-container {display: grid; grid-template-columns: auto auto auto; $gridStyle}" ,
-                             "    .grid-item {$ItemStyle}", '</style>') -join "`r`n"
+    #Skips (does not select) the specified number of items. By default, the Skip parameter counts from the beginning of the array or list of objects, but if the command uses the Last parameter, it counts from the end of the list or array.
+    [int32]$Skip
+  )
+  begin {
+    $rows = @()
+    $html = @('<style>' , "    .grid-container {display: grid; grid-template-columns: auto auto auto; $gridStyle}" ,
+      "    .grid-item {$ItemStyle}", '</style>') -join "`r`n"
+  }
+  process { $rows += $InputObject }
+  end {
+    if ($rows.count -eq 0) { return }
+
+    $selectParams = @{}
+    foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', 'Skip')) {
+      if ($PSBoundParameters.ContainsKey($param)) { $selectParams[$param] = $PSBoundParameters[$param] }
     }
-    process {$rows += $InputObject}
-    end     {
-        if  ($rows.count -eq 0) {return}
+    if ($selectParams.Count -ge 1) { $rows = $rows | Select-Object @selectParams }
 
-        $selectParams  = @{}
-        foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', 'Skip')){
-            if  ($PSBoundParameters.ContainsKey($param)) {$selectParams[$param] = $PSBoundParameters[$param]}
-        }
-        if      ($selectParams.Count -ge 1) {$rows = $rows | Select-Object @selectParams }
+    $properties = $rows[0].psobject.Properties.name
 
-        $properties    =  $rows[0].psobject.Properties.name
-
-        if ($TitleText) {
-            $html     += "`r`n<center><h1>$TitleText</h1></center>"
-        }
-        $html         += "`r`n<div class=`"grid-container`" style=`"grid-template-columns:$(' auto' * $properties.Count);`" >"
-        foreach ($p in $properties) {
-            $html     += "`r`n     <div class=`"grid-item`" style=`"$ColumnHeadingStyle`">$p</div>"
-        }
-        $html         += "`r`n"
-        $rowcount = 0
-        foreach ($r in $rows) {
-            $rowstyle = $rowcount ++ % 2 ? $DarkRowStyle : ""
-            foreach ($p in $properties) {
-                if ($null -eq $r.$p) {
-                    $html += "`r`n     <div class=`"grid-item`" style=`"$rowstyle`"></div>"
-                    continue
-                }
-                if     ($r.$p.GetType().name -match 'int') {
-                                                $itemStyle = $rowstyle + "text-align: right;";  $itemText = $r.$p.tostring($IntFormat)
-                }
-                elseif ($r.$p -is [Single] -or
-                        $r.$p -is [double])    {$itemStyle = $rowstyle + "text-align: right;";  $itemText = $r.$p.tostring($FloatFormat)}
-                elseif ($r.$p -is [boolean])   {$itemStyle = $rowstyle + "text-align: center;"; $itemText = $r.$p.tostring()  }
-                elseif ($r.$p -is [enum])      {$itemStyle = $rowstyle + "text-align: left;";   $itemText = $r.$p.tostring()  }
-                elseif ($r.$p -is [ValueType]) {$itemStyle = $rowstyle + "text-align: right;";  $itemText = $r.$p.tostring() }
-                elseif ($r.$p -is [string])    {$itemStyle = $rowstyle + "text-align: left;";   $itemText = $r.$p }
-                elseif ($r.$p -is [string])    {$itemStyle = $rowstyle + "text-align: left;";   $itemText = $r.$p.toString() }
-                $html += "`r`n     <div class=`"grid-item`" style=`"$itemStyle`">$itemText</div>"
-            }
-            $html     += "`r`n"
-        }
-        $html         += "</div>"
-        if   ($Display) {Write-Notebook -Html $html }
-        else {$html}
+    if ($TitleText) {
+      $html += "`r`n<center><h1>$TitleText</h1></center>"
     }
+    $html += "`r`n<div class=`"grid-container`" style=`"grid-template-columns:$(' auto' * $properties.Count);`" >"
+    foreach ($p in $properties) {
+      $html += "`r`n     <div class=`"grid-item`" style=`"$ColumnHeadingStyle`">$p</div>"
+    }
+    $html += "`r`n"
+    $rowcount = 0
+    foreach ($r in $rows) {
+      $rowstyle = $rowcount ++ % 2 ? $DarkRowStyle : ""
+      foreach ($p in $properties) {
+        if ($null -eq $r.$p) {
+          $html += "`r`n     <div class=`"grid-item`" style=`"$rowstyle`"></div>"
+          continue
+        }
+        if ($r.$p.GetType().name -match 'int') {
+          $itemStyle = $rowstyle + "text-align: right;"; $itemText = $r.$p.tostring($IntFormat)
+        }
+        elseif ($r.$p -is [Single] -or
+          $r.$p -is [double]) { $itemStyle = $rowstyle + "text-align: right;"; $itemText = $r.$p.tostring($FloatFormat) }
+        elseif ($r.$p -is [boolean]) { $itemStyle = $rowstyle + "text-align: center;"; $itemText = $r.$p.tostring() }
+        elseif ($r.$p -is [enum]) { $itemStyle = $rowstyle + "text-align: left;"; $itemText = $r.$p.tostring() }
+        elseif ($r.$p -is [ValueType]) { $itemStyle = $rowstyle + "text-align: right;"; $itemText = $r.$p.tostring() }
+        elseif ($r.$p -is [string]) { $itemStyle = $rowstyle + "text-align: left;"; $itemText = $r.$p }
+        elseif ($r.$p -is [string]) { $itemStyle = $rowstyle + "text-align: left;"; $itemText = $r.$p.toString() }
+        $html += "`r`n     <div class=`"grid-item`" style=`"$itemStyle`">$itemText</div>"
+      }
+      $html += "`r`n"
+    }
+    $html += "</div>"
+    if ($Display) { Write-Notebook -Html $html }
+    else { $html }
+  }
 }
 
-function Out-Cell       {
-    <#
+function Out-Cell {
+  <#
       .SYNOPSIS
         Outputs a notebook cell - takes a script block, or html or objects to format as a list/table
 
@@ -239,39 +244,39 @@ function Out-Cell       {
         In this example, `plot_pipeline` reads a yml file and draws a simple SVG graph.
         Out-cell will assume the script block is creating HTML because it has not been told  as a list, table or grid
     #>
-    [cmdletbinding(DefaultParameterSetName="Default")]
-    [alias("cell")]
-    param   (
-        [Parameter(ParameterSetName='Default', Mandatory=$true, Position=0, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='List',    Mandatory=$true, Position=0, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='Table',   Mandatory=$true, Position=0, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='Grid',    Mandatory=$true, Position=0, ValueFromPipeline=$true )]
-        [Parameter(ParameterSetName='Text',    Mandatory=$true, Position=0, ValueFromPipeline=$true )]
-        $InputObject,
+  [cmdletbinding(DefaultParameterSetName = "Default")]
+  [alias("cell")]
+  param   (
+    [Parameter(ParameterSetName = 'Default', Mandatory = $true, Position = 0, ValueFromPipeline = $true )]
+    [Parameter(ParameterSetName = 'List', Mandatory = $true, Position = 0, ValueFromPipeline = $true )]
+    [Parameter(ParameterSetName = 'Table', Mandatory = $true, Position = 0, ValueFromPipeline = $true )]
+    [Parameter(ParameterSetName = 'Grid', Mandatory = $true, Position = 0, ValueFromPipeline = $true )]
+    [Parameter(ParameterSetName = 'Text', Mandatory = $true, Position = 0, ValueFromPipeline = $true )]
+    $InputObject,
 
-        [Parameter(ParameterSetName='List',    Mandatory=$true)]
-        [Alias('List')]
-        [switch]$AsList,
+    [Parameter(ParameterSetName = 'List', Mandatory = $true)]
+    [Alias('List')]
+    [switch]$AsList,
 
-        [Parameter(ParameterSetName='Table',   Mandatory=$true)]
-        [Alias('Table')]
-        [switch]$AsTable,
+    [Parameter(ParameterSetName = 'Table', Mandatory = $true)]
+    [Alias('Table')]
+    [switch]$AsTable,
 
-        [Parameter(ParameterSetName='Grid',    Mandatory=$true)]
-        [switch]$AsGrid,
+    [Parameter(ParameterSetName = 'Grid', Mandatory = $true)]
+    [switch]$AsGrid,
 
-        [Parameter(ParameterSetName='Grid')]
-        [hashtable]$GridOptions,
+    [Parameter(ParameterSetName = 'Grid')]
+    [hashtable]$GridOptions,
 
-        [Parameter(ParameterSetName='Text',    Mandatory=$true)]
-        [Alias('Text')]
-        [switch]$AsText,
+    [Parameter(ParameterSetName = 'Text', Mandatory = $true)]
+    [Alias('Text')]
+    [switch]$AsText,
 
-        [Parameter(ParameterSetName='Grid' ,Position=1)]
-        [Parameter(ParameterSetName='List' ,Position=1)]
-        [Parameter(ParameterSetName='Table',Position=1)]
-        [Parameter(ParameterSetName='Text' ,Position=1)]
-        $Property,
+    [Parameter(ParameterSetName = 'Grid' , Position = 1)]
+    [Parameter(ParameterSetName = 'List' , Position = 1)]
+    [Parameter(ParameterSetName = 'Table', Position = 1)]
+    [Parameter(ParameterSetName = 'Text' , Position = 1)]
+    $Property,
 
         [Parameter(ParameterSetName='Grid')]
         [Parameter(ParameterSetName='List')]
