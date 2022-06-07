@@ -29,7 +29,9 @@ PowerShell module to reshape data (produce a "pivot" table) based on column valu
     FunctionsToExport  = @(
         'Get-AggregateFunctionNames',
         'Invoke-PSMelt',
-        'New-PSPivotTable'
+        'New-PSPivotTable',
+        'Get-SubTotal',
+        'ConvertTo-CrossTab'
     )
 
     # Aliases to export from this module
