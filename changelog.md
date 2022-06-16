@@ -1,8 +1,10 @@
 # Change log
 
-## post v0.8.0
+## v0.8.1
 
-Added Get-SubTotal and ConvertTo-PivotTable.
+Thank you to James O'Neill
+
+- Added Get-SubTotal and ConvertTo-PivotTable.
 
 ## v0.8.0
 
