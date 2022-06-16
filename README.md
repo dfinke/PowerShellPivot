@@ -266,3 +266,104 @@ Date     1/1/20
 Date     1/1/20
 Date     1/2/20
 ```
+
+## ConvertTo-CrossTab
+
+Converts simple rows into a cross tab query
+
+```powershell
+ConvertFrom-Csv @"
+Region,State,Units,Price
+West,Texas,927,923.71
+North,Tennessee,466,770.67
+East,Florida,520,458.68
+East,Maine,828,661.24
+West,Virginia,465,053.58
+North,Missouri,436,235.67
+South,Kansas,214,992.47
+North,North Dakota,789,640.72
+South,Delaware,712,508.55
+"@ | ConvertTo-CrossTab -ColumnName Region -RowName State -ValueName Units -SuffixColumn " units"
+```
+
+```powershell
+State        East units North units South units West units
+-----        ---------- ----------- ----------- ----------
+Delaware                            712         
+Florida      520                                
+Kansas                              214         
+Maine        828                                
+Missouri                436                     
+North Dakota            789                     
+Tennessee               466                     
+Texas                                           927
+Virginia                                        465
+```
+
+## Get-Subtotal
+
+Adds subtotals to data
+
+```powershell
+ConvertFrom-Csv @"
+Region,State,Units,Price
+West,Texas,927,923.71
+North,Tennessee,466,770.67
+East,Florida,520,458.68
+East,Maine,828,661.24
+West,Virginia,465,053.58
+North,Missouri,436,235.67
+South,Kansas,214,992.47
+North,North Dakota,789,640.72
+South,Delaware,712,508.55
+"@ | Get-Subtotal State, Region
+```
+
+Default is to calculate the count.
+
+```powershell
+State        Region Count
+-----        ------ -----
+Delaware     South      1
+Florida      East       1
+Kansas       South      1
+Maine        East       1
+Missouri     North      1
+North Dakota North      1
+Tennessee    North      1
+Texas        West       1
+Virginia     West       1
+```
+
+`-AllStats` will calculate the count, average, sum, maximum, minimum, and standard deviation.
+
+```powershell
+ConvertFrom-Csv @"
+Region,State,Units,Price
+West,Texas,927,923.71
+North,Tennessee,466,770.67
+North,Tennessee,1466,770.67
+East,Florida,520,458.68
+East,Maine,828,661.24
+West,Virginia,465,053.58
+North,Missouri,436,235.67
+South,Kansas,214,992.47
+South,Kansas,1214,992.47
+North,North Dakota,789,640.72
+South,Delaware,712,508.55
+"@ | Get-Subtotal State, Region -ValueName Units -AllStats
+```
+
+```powershell
+State        Region Units_Count Units_Average Units_Sum Units_Maximum Units_Minimum Units_StandardDeviation
+-----        ------ ----------- ------------- --------- ------------- ------------- -----------------------
+Delaware     South            1           712       712           712           712                       0
+Florida      East             1           520       520           520           520                       0
+Kansas       South            2           714      1428          1214           214        707.106781186548
+Maine        East             1           828       828           828           828                       0
+Missouri     North            1           436       436           436           436                       0
+North Dakota North            1           789       789           789           789                       0
+Tennessee    North            2           966      1932          1466           466        707.106781186548
+Texas        West             1           927       927           927           927                       0
+Virginia     West             1           465       465           465           465                       0
+```
