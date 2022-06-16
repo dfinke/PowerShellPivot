@@ -1,10 +1,15 @@
-# PS Pivot Table
+# PowerShell Pivot Table
+
+[![PSPivotTable CI](https://github.com/dfinke/PowerShellPivot/actions/workflows/ci.yml/badge.svg)](https://github.com/dfinke/PowerShellPivot/actions/workflows/ci.yml)
+[![](https://img.shields.io/powershellgallery/v/PowerShellPivot.svg)](https://www.powershellgallery.com/packages/PowerShellPivot)
+[![](https://img.shields.io/powershellgallery/dt/PowerShellPivot.svg)](https://www.powershellgallery.com/packages/PowerShellPivot)
+[![](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/dfinke/PowerShellPivot/blob/master/LICENSE.txt)
 
 <p align="center">
 • <a href="https://github.com/dfinke/PowerShellPivot/wiki" style="font-size: 25px">Documentation</a> •
 </p>
 
-Create a spreadsheet-style pivot table.
+Create a spreadsheet-style pivot table and more...
 
 Drawing from Excel pivot table concepts and Python Pandas pivot table functionality.
 
