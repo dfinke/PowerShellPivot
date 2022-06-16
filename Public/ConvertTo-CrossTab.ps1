@@ -51,7 +51,7 @@ function ConvertTo-CrossTab {
         [string]$RowName,
         [String]$ColumnName,
         [string]$PrefixColumn = "",
-        [String]$SuffixColum = "",
+        [String]$SuffixColumn = "",
         [string]$ValueName,
         [Parameter(ValueFromPipeline=$true,Mandatory=$true)]
         $InputObject
@@ -77,7 +77,7 @@ function ConvertTo-CrossTab {
         if ($Duplicates) {
             Write-Warning "Some Row/Column combinations had duplicate rows, the last value in the data will be used"
         }
-        $OutputProperties= @($RowName) + ($Columns.Keys | Sort-Object | ForEach-Object {@{n=($PrefixColumn + $_ + $SuffixColum); e= $_.tostring()}})
+        $OutputProperties= @($RowName) + ($Columns.Keys | Sort-Object | ForEach-Object {@{n=($PrefixColumn + $_ + $SuffixColumn); e= $_.tostring()}})
         $rows.Keys | Sort-Object | ForEach-Object {
             $r = $rows[$_]
             $r[$RowName] = $_
