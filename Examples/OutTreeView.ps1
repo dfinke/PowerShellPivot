@@ -51,5 +51,5 @@ foreach ( $rowHeading in $pivoted.$PivotBy) {
     $html = $html -replace "<td>\s*$rowHeading\s*</td>" , "<td>$tree</td>"
 }
 
-$html > ./test.html
-Invoke-Item ./test.html
+$html > $PSScriptRoot/outTreeview.html
+Invoke-Item $PSScriptRoot/outTreeview.html
