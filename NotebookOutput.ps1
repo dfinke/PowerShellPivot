@@ -278,104 +278,105 @@ function Out-Cell {
     [Parameter(ParameterSetName = 'Text' , Position = 1)]
     $Property,
 
-        [Parameter(ParameterSetName='Grid')]
-        [Parameter(ParameterSetName='List')]
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='Text')]
-        [string[]]$ExcludeProperty,
+    [Parameter(ParameterSetName = 'Grid')]
+    [Parameter(ParameterSetName = 'List')]
+    [Parameter(ParameterSetName = 'Table')]
+    [Parameter(ParameterSetName = 'Text')]
+    [string[]]$ExcludeProperty,
 
-        [Parameter(ParameterSetName='Grid')]
-        [Parameter(ParameterSetName='List')]
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='Text')]
-        [int32]$First,
+    [Parameter(ParameterSetName = 'Grid')]
+    [Parameter(ParameterSetName = 'List')]
+    [Parameter(ParameterSetName = 'Table')]
+    [Parameter(ParameterSetName = 'Text')]
+    [int32]$First,
 
-        [Parameter(ParameterSetName='Grid')]
-        [Parameter(ParameterSetName='List')]
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='Text')]
-        [int32]$Last,
+    [Parameter(ParameterSetName = 'Grid')]
+    [Parameter(ParameterSetName = 'List')]
+    [Parameter(ParameterSetName = 'Table')]
+    [Parameter(ParameterSetName = 'Text')]
+    [int32]$Last,
 
-        [Parameter(ParameterSetName='Grid')]
-        [Parameter(ParameterSetName='List')]
-        [Parameter(ParameterSetName='Table')]
-        [Parameter(ParameterSetName='Text')]
-        [int32]$Skip,
+    [Parameter(ParameterSetName = 'Grid')]
+    [Parameter(ParameterSetName = 'List')]
+    [Parameter(ParameterSetName = 'Table')]
+    [Parameter(ParameterSetName = 'Text')]
+    [int32]$Skip,
 
-        [switch]$PassThru
-    )
-    begin   {
-            $data = @()
+    [switch]$PassThru
+  )
+  begin {
+    $data = @()
+  }
+  process {
+    if ($InputObject -is [scriptblock]) {
+      $data += Invoke-Command -ScriptBlock $InputObject
     }
-    process {
-        if ($InputObject -is [scriptblock]) {
-                $data += Invoke-Command -ScriptBlock $InputObject
-        }
-        else {  $data += $InputObject }
+    else { $data += $InputObject }
+  }
+  end {
+    # if we're not told to render as something assume we've recieved HTML
+    if (-not ($AsGrid -or $AsList -or $AsTable -or $AsText)) {
+      $html = $data -join ""
     }
-    end     {
-        # if we're not told to render as something assume we've recieved HTML
-        if (-not ($AsGrid -or $AsList -or $AsTable -or $AsText)) {
-                $html = $data -join ""
+    else {
+      $selectParameterNames = @("First", "Last", "Skip", "Property", "ExcludeProperty")
+      if ($PSBoundParameters[$selectParameterNames]) {
+        $selectParams = @{}
+        foreach ($p in $selectParameterNames.Where({ $PSBoundParameters.ContainsKey($_) })) {
+          $selectParams[$p] = $PSBoundParameters[$p]
         }
-        else {
-            $selectParameterNames = @("First","Last","Skip","Property","ExcludeProperty")
-            if ($PSBoundParameters[$selectParameterNames]) {
-                $selectParams = @{}
-                foreach ($p in $selectParameterNames.Where({$PSBoundParameters.ContainsKey($_)})) {
-                    $selectParams[$p]=$PSBoundParameters[$p]
-                }
-                $data = $data | Select-Object @selectParams
-            }
-            if ($GridOptions) {$html = $data | ConvertTo-Grid @GridOptions}
-            elseif  ($AsGrid) {$html = $data | ConvertTo-Grid }
-            elseif  ($AsList) {$html = $data | ConvertTo-Html -Fragment -As "List"}
-            elseif ($AsTable) {$html = $data | ConvertTo-Html -Fragment -As "Table"}
-            elseif  ($AsText) {
-                $t = $data | Out-String
-                Write-Notebook -Text $t.Trim() -PassThru:$PassThru
-                return
-            }
-        }
-        Write-Notebook -Html $html -PassThru:$PassThru
+        $data = $data | Select-Object @selectParams
+      }
+      if ($GridOptions) { $html = $data | ConvertTo-Grid @GridOptions }
+      elseif ($AsGrid) { $html = $data | ConvertTo-Grid }
+      elseif ($AsList) { $html = $data | ConvertTo-Html -Fragment -As "List" }
+      elseif ($AsTable) { $html = $data | ConvertTo-Html -Fragment -As "Table" }
+      elseif ($AsText) {
+        $t = $data | Out-String
+        Write-Notebook -Text $t.Trim() -PassThru:$PassThru
+        return
+      }
     }
+    Write-Notebook -Html $html -PassThru:$PassThru
+  }
 }
 
 function Write-Progress {
-    <#
+  <#
       .SYNOPSIS
         Notebook friendly replacement for the Write-Progress cmdlet. Similar to the "Minimal" view implemented in PowerShell 7.2
     #>
-    param (
-        [Parameter(Mandatory=$true,position = 0)]
-        [string]$Activity,
-        [Parameter(position = 1)]
-        [string]$Status,
-        [string]$CurrentOperation,
-        [int]$PercentComplete,
-        [int]$SecondsRemaining,
-        [switch]$Completed
-    )
-    if ($status)           {$bar  = "{0,-100}"  -f $Status}
-    else                   {$bar  = "{0,-100}"  -f $CurrentOperation} #even if it is empty!
-    if ($PercentComplete)  {$bar  = $PSStyle.Background.blue + $PSStyle.Foreground.BrightWhite +
+  param (
+    [Parameter(Mandatory = $true, position = 0)]
+    [string]$Activity,
+    [Parameter(position = 1)]
+    [string]$Status,
+    [string]$CurrentOperation,
+    [int]$PercentComplete,
+    [int]$SecondsRemaining,
+    [switch]$Completed
+  )
+  if ($status) { $bar = "{0,-100}" -f $Status }
+  else { $bar = "{0,-100}" -f $CurrentOperation } #even if it is empty!
+  if ($PercentComplete) {
+    $bar = $PSStyle.Background.blue + $PSStyle.Foreground.BrightWhite +
                                     ($bar -replace "(?<=^.{$percentComplete})", ($PSStyle.Reset + $PSStyle.Foreground.blue))
-    }
-    if ($SecondsRemaining) {$bar += $SecondsRemaining.tostring("0s") }
-    if ($Completed)        {$bar  = ' '}
-    else                   {$bar  = $PSStyle.Foreground.blue + $Activity +  "[" + $bar + "]" + $PSStyle.Reset}
+  }
+  if ($SecondsRemaining) { $bar += $SecondsRemaining.tostring("0s") }
+  if ($Completed) { $bar = ' ' }
+  else { $bar = $PSStyle.Foreground.blue + $Activity + "[" + $bar + "]" + $PSStyle.Reset }
 
-    if ($global:ProgressBar -and $global:contextID -eq  [KernelInvocationContext]::Current.Command.Properties.id) {
-        $global:ProgressBar.Update($bar)
-    }
-    else {
-        $global:ProgressBar =  Write-Notebook -Text $bar -PassThru
-        $global:contextID   =  [KernelInvocationContext]::Current.Command.Properties.id
-    }
+  if ($global:ProgressBar -and $global:contextID -eq [KernelInvocationContext]::Current.Command.Properties.id) {
+    $global:ProgressBar.Update($bar)
+  }
+  else {
+    $global:ProgressBar = Write-Notebook -Text $bar -PassThru
+    $global:contextID = [KernelInvocationContext]::Current.Command.Properties.id
+  }
 }
 
-function Out-Mermaid    {
-    <#
+function Out-Mermaid {
+  <#
       .DESCRIPTION
         Accepts a mermaid chart definition as a parameter (example with the definition) or from the  pipeline
         and outputs the minimum correct HTML / Javascript but  **depends on the kernel extension being loaded**
@@ -400,15 +401,15 @@ function Out-Mermaid    {
 
         Outputs a sample diagram found on the mermaid home page
     #>
-    [alias('Mermaid')]
-    param   (
-        [parameter(ValueFromPipeline=$true,Mandatory=$true,Position=0)]
-        $Text
-    )
-    begin   {
-        $mermaid = ""
-        $guid    = ([guid]::NewGuid().ToString() -replace '\W','')
-        $html    = @"
+  [alias('Mermaid')]
+  param   (
+    [parameter(ValueFromPipeline = $true, Mandatory = $true, Position = 0)]
+    $Text
+  )
+  begin {
+    $mermaid = ""
+    $guid = ([guid]::NewGuid().ToString() -replace '\W', '')
+    $html = @"
 <div style="background-color:white;"><script type="text/javascript">
 loadMermaid_$guid = () => {(require.config({ 'paths': { 'context': '1.0.252001', 'mermaidUri' : 'https://colombod.github.io/dotnet-interactive-cdn/extensionlab/1.0.252001/mermaid/mermaidapi', 'urlArgs': 'cacheBuster=7de2aec4927849b5a989d2305cf957bc' }}) || require)(['mermaidUri'], (mermaid) => {let renderTarget = document.getElementById('$guid'); mermaid.render( 'mermaid_$guid', ``~~Mermaid~~``, g => {renderTarget.innerHTML = g  });}, (error) => {console.log(error);});}
 if ((typeof(require) !==  typeof(Function)) || (typeof(require.config) !== typeof(Function))) {
@@ -420,13 +421,14 @@ if ((typeof(require) !==  typeof(Function)) || (typeof(require.config) !== typeo
 }
 else {loadMermaid_$guid();}
 </script><div id="$guid"></div></div>
-"@  }
-    process {$Mermaid +=  ("`r`n" + $Text -replace '^[\r\n]+','' -replace '[\r\n]+$','') }
-    end     {Write-Notebook -Html  ($html -replace  '~~Mermaid~~',$mermaid ) }
+"@  
+  }
+  process { $Mermaid += ("`r`n" + $Text -replace '^[\r\n]+', '' -replace '[\r\n]+$', '') }
+  end { Write-Notebook -Html  ($html -replace '~~Mermaid~~', $mermaid ) }
 }
 
-function Out-TreeView   {
-    <#
+function Out-TreeView {
+  <#
       .SYNOPSIS
         Outputs a treeview to a notebook.
 
@@ -514,53 +516,61 @@ function Out-TreeView   {
                >  Phil
 
     #>
-    param   (
-        [Parameter(Position=0, ValueFromPipeline=$true, Mandatory=$true)]
-        $InputObject,
-        [string]$TitleHtml ='Tree view',
-        [Parameter(Position=1)]
-        $Property,
-        $ExcludeProperty,
-        [switch]$Display,
-        [switch]$Unique,
-        [int32]$Last,
-        [int32]$First,
-        [int32]$Skip,
-        [string]$TreeviewCss
-    )
-    begin   {
-        if ($ExcludeProperty -and -not $Property) {$Property = '*'}
-        $rows = @()
-        if (-not $PSBoundParameters.ContainsKey('$TreeviewCss')) { $treeViewCss = @'
+  param   (
+    [Parameter(Position = 0, ValueFromPipeline = $true, Mandatory = $true)]
+    $InputObject,
+    [string]$TitleHtml = 'Tree view',
+    [Parameter(Position = 1)]
+    $Property,
+    $ExcludeProperty,
+    [switch]$Display,
+    [switch]$Unique,
+    [Switch]$Raw,
+    [int32]$Last,
+    [int32]$First,
+    [int32]$Skip,
+    [string]$TreeviewCss
+  )
+  begin {
+    if ($ExcludeProperty -and -not $Property) { $Property = '*' }
+    $rows = @()
+    if (-not $PSBoundParameters.ContainsKey('$TreeviewCss')) {
+      $treeViewCss = @'
 <style id="dni-styles-JsonElement">
     .dni-code-hint { font-style: italic; overflow: hidden;  white-space: nowrap;}
     .dni-treeview  { white-space: nowrap; }
     .dni-treeview td { vertical-align: top;}
     details.dni-treeview {padding-left: 1em;}
 </style>
-'@ }}
-    process { $rows += $InputObject}
-    end     {
-        $selectParams = @{}
-        foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', 'Skip')){
-            if ($PSBoundParameters.ContainsKey($param)) {$selectParams[$param] = $PSBoundParameters[$param]}
-        }
-        if     ($selectParams.Count -ge 1) {$rows = $rows | Select-Object @selectParams }
-        #using psobject.Properties we get them in the correct order, not alphabetically.
-        $propNames   = $rows[0].psobject.Properties.name
-        $outputHtml  = '<details class="dni-treeview"><summary><span class="dni-code-hint">{0}</span></summary><div><table>' -f $TitleHtml
-        $outputHtml += "`r`n  <thead>`r`n    <tr>"
-        foreach ($p in $propNames) {$outputHtml += "<td>$p</td>"}
-        $outputHtml += "</tr>`r`n  </thead>`r`n  <tbody>"
-        foreach ($r in $rows) {
-            $outputHtml += "`r`n    <tr>"
-            foreach ($p in $propNames) {
-                $outputHtml += '<td><span><div class="dni-plaintext">{0}</div></span></td>' -f $r.$p
-            }
-            $outputHtml += "</tr>"
-        }
-        $outputHtml += "`r`n  </tbody>`r`n</table></div></details>`r`n"
-        if ($Display) {Write-Notebook -Html ($outputHtml + $treeViewCss) }
-        else          {[Kernel]::HTML( $outputHtml)  }
+'@ 
     }
+  }
+  process { $rows += $InputObject }
+  end {
+    $selectParams = @{}
+    foreach ($param in @( 'Property', 'ExcludeProperty', 'Unique', 'Last', 'First', 'Skip')) {
+      if ($PSBoundParameters.ContainsKey($param)) { $selectParams[$param] = $PSBoundParameters[$param] }
+    }
+    if ($selectParams.Count -ge 1) { $rows = $rows | Select-Object @selectParams }
+    #using psobject.Properties we get them in the correct order, not alphabetically.
+    $propNames = $rows[0].psobject.Properties.name
+    $outputHtml = '<details class="dni-treeview"><summary><span class="dni-code-hint">{0}</span></summary><div><table>' -f $TitleHtml
+    $outputHtml += "`r`n  <thead>`r`n    <tr>"
+    foreach ($p in $propNames) { $outputHtml += "<td>$p</td>" }
+    $outputHtml += "</tr>`r`n  </thead>`r`n  <tbody>"
+    foreach ($r in $rows) {
+      $outputHtml += "`r`n    <tr>"
+      foreach ($p in $propNames) {
+        $outputHtml += '<td><span><div class="dni-plaintext">{0}</div></span></td>' -f $r.$p
+      }
+      $outputHtml += "</tr>"
+    }
+    $outputHtml += "`r`n  </tbody>`r`n</table></div></details>`r`n"
+    
+    if ($Raw) {
+      $outputHtml + $treeViewCss
+    }
+    elseif ($Display) { Write-Notebook -Html ($outputHtml + $treeViewCss) }
+    else { [Kernel]::HTML( $outputHtml) }
+  }
 }
