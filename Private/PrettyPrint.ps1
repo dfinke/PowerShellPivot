@@ -26,13 +26,13 @@ function PrettyPrint {
         $strFmt += "{$colIdx,$colPad}"
     }
     
-    $topBottomChar = '─' 
+    $topBottomChar = '─'      
     # $topBottomChar = '╼'
     # $topBottomChar = '╸'
-    
-    $sepChar = '|'
+     
+    # $sepChar = '|'
     # $sepChar = '╏'
-    # $sepChar = '║'
+    $sepChar = '║'
     # $sepChar = '┊'
     # $sepChar = '╿'
     
@@ -45,9 +45,11 @@ function PrettyPrint {
     $output
     
     foreach ($item in $keys) {
-        $data = ("'{0}'," -f $item) + ($InputObject["$($item)"].Values.Result() -join ', ')
-        $target = "$fmt -f $data"
-        Invoke-Expression $target
+        $newValues = $InputObject["$($item)"].Values.Result() -replace 'Nan', "'Nan'"        
+        $data = ("'{0}'," -f $item) + ($newValues -join ', ')
+        # $target = "$fmt -f $data"
+        # Invoke-Expression $target
+        "$fmt -f $data" | Invoke-Expression
     }
     
     $topBottomChar * $output.Length 
