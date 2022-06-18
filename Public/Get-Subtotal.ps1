@@ -54,7 +54,8 @@ function Get-Subtotal  {
         [Parameter(ParameterSetName='Chars')]
         [switch]$Line,
         [Parameter(ParameterSetName='Chars')]
-        [switch]$Word
+            [switch]$Word,
+        [switch]$NoPrefix
     )
     begin {
         $data   = @()
@@ -69,7 +70,9 @@ function Get-Subtotal  {
         [void]$params.Remove('GroupByName')
         [void]$params.Remove('ValueName')
         [void]$params.Remove('Count')
+        [void]$params.Remove('NoPrefix')
         if ($IgnoreWhiteSpace -and -not ($Line -or $Character -or $Word)) {$params['Character']=$true}
+        if ($params.Keys.Count -gt 1 -and $NoPrefix) {Write-Warning "NoPrefix ignored whene there are multiple aggregations"}
         $data | Group-Object -Property $GroupByName | ForEach-Object {
             $newobj = [Ordered]@{}
             #For whatever we grouped on, get that value/those values from the first row of each group. Then total the properties we're interested in
@@ -91,8 +94,13 @@ function Get-Subtotal  {
                             $agFunctions = $params.Keys
                     }
                     else {  $agFunctions = "Count","Average","Sum","Maximum","Minimum","StandardDeviation"}
-                    foreach ($agFn in $agFunctions)  {
-                                 $newObj[($v + "_" + $agfn )] = $totals.$agFn
+                    if ($agfunctions.Count -eq 1 -and $NoPrefix) {
+                        $newObj[$v] = $totals.($agFunctions[0])
+                    }
+                    else {
+                        foreach ($agFn in $agFunctions)  {
+                                 $newObj[($agfn + "_" + $v )] = $totals.$agFn
+                        }
                     }
                 }
             }

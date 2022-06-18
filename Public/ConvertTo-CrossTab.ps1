@@ -45,16 +45,47 @@ function ConvertTo-CrossTab {
     Feb   Bob    Jean
     Jan   Alice  Alex
     Mar   Chris  Phil
+    .EXAMPLE
+    PS>  ConvertFrom-Csv @"
+    Region,Item,TotalSold
+    West,melon,27
+    North,avocado,21
+    West,kiwi,84
+    East,melon,23
+    North,kiwi,8
+    North,avocado,29
+    North,kiwi,46
+    South,avocado,83
+    East,Melon,10
+    South,avocado,40
+    "@  | ConvertTo-CrossTab -ValueName TotalSold -RowName Region -columnname item | ft
+
+    This data has more than one item at least Region/Item combination so the data is aggreated
+    - no aggregation function is specified so the default "SUM" is used and the result is
+
+        Region avocado kiwi melon
+        ------ ------- ---- -----
+        East                   33
+        North  50      54
+        South  123
+        West           84      27
 #>
 
     param(
-        [string]$RowName,
-        [String]$ColumnName,
-        [string]$PrefixColumn = "",
-        [String]$SuffixColumn = "",
+        [Parameter(Position=0,Mandatory=$true)]
         [string]$ValueName,
+        [Parameter(Position=1,Mandatory=$true)]
+        [string]$RowName,
+        [Parameter(Position=2,Mandatory=$true)]
+        [String]$ColumnName,
+        [Parameter(Position=3)]
+        [validateset("Count", "Average", "Maximum", "Minimum", "StandardDeviation", "Sum", "Character", "Line", "Word")]
+        [string]$Aggregate = "Sum",
+        [string]$PrefixColumn = "",
+        [string]$SuffixColumn = "",
         [Parameter(ValueFromPipeline=$true,Mandatory=$true)]
-        $InputObject
+        $InputObject,
+        [switch]$IgnoreWhiteSpace
         )
     begin {
         $data = @()
@@ -63,20 +94,31 @@ function ConvertTo-CrossTab {
         $data += $inputObject
     }
     end {
+        if (($data | Group-Object -Property $RowName,$ColumnName -NoElement | ForEach-Object count) -gt 1) {
+            $subTotalParams = @{$Aggregate=$true; NoPrefix=$true ; ValueName = $ValueName; GroupByName=@($RowName,$ColumnName) }
+            if ($IgnoreWhiteSpace -and $Aggregate -notin @("Character ", "Line ", "Word")) {
+                Write-warning "Can't use ignorewhitespace with $Aggregate ignoring it. "
+            }
+            elseif ($IgnoreWhiteSpace) {$subTotalParams["IgnoreWhiteSpace"]=$true}
+            $data = $data | Get-Subtotal @subTotalParams
+        }
+        elseif ($PSBoundParameters.ContainsKey('Aggregate')) {
+            Write-Warning "There is only one value for each combination of $RowName and $ColumnName"
+        }
         $Rows    = @{}
         $Columns = @{}
         if ($data.where({($null -eq  $_.$RowName) -or ($null -eq $_.$ColumnName) -or ($null -eq $_.$ValueName)}) ) {
             Write-Warning "Some data is missing $RowName and/or $ColumnName and/or $ValueName properties"
         }
-        $Duplicates = $false
+#       $Duplicates = $false
         foreach ($d in $data.where({$_.$RowName -and $_.$ColumnName -and $_.$ValueName}))   {
             if ($null -eq $rows[$d.$RowName]) {$rows[$d.$RowName] = @{}}
-            if ($null -ne $rows[$d.$RowName][$d.$ColumnName]) {$Duplicates = $true} else {$Columns[$d.$ColumnName] = $true }
+            $Columns[$d.$ColumnName] = $true #if ($null -ne $rows[$d.$RowName][$d.$ColumnName]) {$Duplicates = $true} else { }
             $rows[$d.$RowName][$d.$ColumnName] = $d.$ValueName
         }
-        if ($Duplicates) {
-            Write-Warning "Some Row/Column combinations had duplicate rows, the last value in the data will be used"
-        }
+#       if ($Duplicates) {
+#           Write-Warning "Some Row/Column combinations had duplicate rows, the last value in the data will be used"
+#       }
         $OutputProperties= @($RowName) + ($Columns.Keys | Sort-Object | ForEach-Object {@{n=($PrefixColumn + $_ + $SuffixColumn); e= $_.tostring()}})
         $rows.Keys | Sort-Object | ForEach-Object {
             $r = $rows[$_]
