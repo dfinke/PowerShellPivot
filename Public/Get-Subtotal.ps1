@@ -25,16 +25,18 @@ function Get-Subtotal  {
         [Parameter(Position=0)]
         $GroupByName,
         #The property name(s) to aggregate - if none is specified items are counted
+        [Parameter(Position=1)]
         $ValueName,
         #The data to subtotal
-        [Parameter(ValueFromPipeline=$true)]
-        $InputObject,
-
+        [Parameter(Position=2)]
         [ValidateSet('Average', 'Count',  'Sum', 'Max', 'Min', 'Mean', 'Entropy', 'GeometricMean', 'HarmonicMean',  'Median',
                      'Quantile', 'LowerQuartile', 'UpperQuartile', 'RootMeanSquare',
                      'StandardDeviation', 'PopulationStandardDeviation', 'std', 'Variance', 'PopulationVariance',
                      'AllStats',  'Character', 'Line', 'Word')]
         [String[]]$AggregateFunction = @('Average'),
+
+        [Parameter(ValueFromPipeline=$true)]
+        $InputObject,
 
         [Alias('NoPrefix','NoSuffix')]
         [switch]$SimpleName,
