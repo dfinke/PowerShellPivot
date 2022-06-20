@@ -1,0 +1,7 @@
+import pandas as pd
+
+df = pd.read_csv('sales.csv')
+
+# print(pd.crosstab(df.Region, df.Type))
+# print(pd.crosstab(df.Region, df.Type))
+print(pd.crosstab())

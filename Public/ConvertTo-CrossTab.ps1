@@ -79,13 +79,8 @@ function ConvertTo-CrossTab {
         [Parameter(Position=2,Mandatory=$true)]
         [String]$ColumnName,
         [Parameter(Position=3)]
-        [ValidateSet('Average', 'Count',  'Sum', 'Max', 'Min', 'Mean', 'Entropy', 'GeometricMean', 'HarmonicMean',  'Median',
-                     'Quantile', 'LowerQuartile', 'UpperQuartile', 'RootMeanSquare',
-                     'StandardDeviation', 'PopulationStandardDeviation', 'std', 'Variance', 'PopulationVariance',
-                     'AllStats',  'Character', 'Line', 'Word')]
-        [String]$AggregateFunction = "Sum",
-
-
+        [validateset("Count", "Average", "Maximum", "Minimum", "StandardDeviation", "Sum", "Character", "Line", "Word")]
+        [string]$Aggregate = "Sum",
         [string]$PrefixColumn = "",
         [string]$SuffixColumn = "",
         [Parameter(ValueFromPipeline=$true,Mandatory=$true)]
@@ -99,10 +94,10 @@ function ConvertTo-CrossTab {
         $data += $inputObject
     }
     end {
-        if (($data | Group-Object -Property $RowName,$ColumnName | ForEach-Object {$_.Group.count}) -gt 1) {
-            $subTotalParams = @{AggregateFunction=$AggregateFunction; SimpleName=$true ; ValueName = $ValueName; GroupByName=@($RowName,$ColumnName) }
-            if ($IgnoreWhiteSpace -and $AggregateFunction -notin @("Character ", "Line ", "Word")) {
-                Write-warning "Can't use ignorewhitespace with $AggregateFunction ignoring it. "
+        if (($data | Group-Object -Property $RowName,$ColumnName -NoElement | ForEach-Object count) -gt 1) {
+            $subTotalParams = @{$Aggregate=$true; NoSuffix=$true ; ValueName = $ValueName; GroupByName=@($RowName,$ColumnName) }
+            if ($IgnoreWhiteSpace -and $Aggregate -notin @("Character ", "Line ", "Word")) {
+                Write-warning "Can't use ignorewhitespace with $Aggregate ignoring it. "
             }
             elseif ($IgnoreWhiteSpace) {$subTotalParams["IgnoreWhiteSpace"]=$true}
             $data = $data | Get-Subtotal @subTotalParams
