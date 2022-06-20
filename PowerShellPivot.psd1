@@ -43,6 +43,9 @@ PowerShell module to reshape data (produce a "pivot" table) based on column valu
     # Cmdlets to export from this module
     CmdletsToExport    = @()
 
+    # Type files (.ps1xml) to be loaded when importing this module
+    TypesToProcess = @('Group.type.ps1xml')
+
     FileList           = @()
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess
@@ -101,9 +104,6 @@ PowerShell module to reshape data (produce a "pivot" table) based on column valu
 
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
     # ScriptsToProcess   = @()
-
-    # Type files (.ps1xml) to be loaded when importing this module
-    # TypesToProcess = @()
 
     # Format files (.ps1xml) to be loaded when importing this module
     # FormatsToProcess = @()
