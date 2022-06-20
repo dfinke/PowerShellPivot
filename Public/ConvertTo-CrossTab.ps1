@@ -94,7 +94,7 @@ function ConvertTo-CrossTab {
         $data += $inputObject
     }
     end {
-        if (($data | Group-Object -Property $RowName,$ColumnName -NoElement | ForEach-Object count) -gt 1) {
+        if (($data | Group-Object -Property $RowName,$ColumnName | ForEach-Object {$_.Group.count} ) -gt 1) {
             $subTotalParams = @{$Aggregate=$true; NoSuffix=$true ; ValueName = $ValueName; GroupByName=@($RowName,$ColumnName) }
             if ($IgnoreWhiteSpace -and $Aggregate -notin @("Character ", "Line ", "Word")) {
                 Write-warning "Can't use ignorewhitespace with $Aggregate ignoring it. "
