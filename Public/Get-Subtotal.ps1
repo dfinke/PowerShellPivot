@@ -20,59 +20,70 @@ function Get-Subtotal  {
          Produces a table by file extension of min and max dates for file creation and last write
     #>
     [cmdletbinding(DefaultParameterSetName='Default')]
-    param (
+    param   (
         #The property name(s) to group on.
         [Parameter(Position=0)]
         $GroupByName,
-        #The property name(s) to aggregrate, using the switches used in Measure-Object
-        [Parameter(Position=1,ParameterSetName='Default')]
-        [Parameter(Position=1,ParameterSetName='Stats',Mandatory=$true)]
-        [Parameter(Position=1,ParameterSetName='Chars',Mandatory=$true)]
+        #The property name(s) to aggregate - if none is specified items are counted
+        [Parameter(Position=1)]
         $ValueName,
         #The data to subtotal
+        [Parameter(Position=2)]
+        [ValidateSet('Average', 'Count',  'Sum', 'Max', 'Min', 'Mean', 'Entropy', 'GeometricMean', 'HarmonicMean',  'Median',
+                     'Quantile', 'LowerQuartile', 'UpperQuartile', 'RootMeanSquare',
+                     'StandardDeviation', 'PopulationStandardDeviation', 'std', 'Variance', 'PopulationVariance',
+                     'AllStats',  'Character', 'Line', 'Word')]
+        [String[]]$AggregateFunction = @('Average'),
+
         [Parameter(ValueFromPipeline=$true)]
         $InputObject,
-        [Parameter(ParameterSetName='Default')]
-        [Parameter(ParameterSetName='Stats')]
+
+        [Alias('NoPrefix','NoSuffix')]
+        [switch]$SimpleName,
+
+        #Equivalent to adding count to -AggregateFunction
         [switch]$Count,
-        [Parameter(ParameterSetName='Stats')]
+        #Equivalent to adding AllStats to -AggregateFunction -selects "Min", "Max", "Average", "STD", "Sum" and, "Count"
         [switch]$AllStats,
-        [Parameter(ParameterSetName='Stats')]
+        #Equivalent to adding Average to AggregateFunction (mean and average do the same job in AggregateFunction)
         [switch]$Average,
-        [Parameter(ParameterSetName='Stats')]
+        #Equivalent to adding max (not 'Maximum') to -AggregateFunction
         [switch]$Maximum,
-        [Parameter(ParameterSetName='Stats')]
+        #Equivalent to adding min (not 'Minimum') to -AggregateFunction
         [switch]$Minimum,
-        [Parameter(ParameterSetName='Stats')]
+        #Equivalent to adding count to $AggregateFunction
         [switch]$StandardDeviation,
-        [Parameter(ParameterSetName='Stats')]
+        #Equivalent to adding Sum to $AggregateFunction
         [switch]$Sum,
-        [Parameter(ParameterSetName='Chars')]
+         #Equivalent to adding word to -AggregateFunction - uses Measure-Object to count Characters
         [switch]$Character,
-        [Parameter(ParameterSetName='Chars')]
-        [switch]$IgnoreWhiteSpace,
-        [Parameter(ParameterSetName='Chars')]
+         #Equivalent to adding word to -AggregateFunction - uses Measure-Object to count Lines
         [switch]$Line,
-        [Parameter(ParameterSetName='Chars')]
-            [switch]$Word,
-        [switch]$NoSuffix
+         #Equivalent to adding word to -AggregateFunction - uses Measure-Object to count words
+        [switch]$Word,
+        # Ignores whitespace when measuring Chars words or lines
+        [switch]$IgnoreWhiteSpace
     )
-    begin {
-        $data   = @()
-    }
-    process {
-        $data  += $inputObject
-    }
+    begin   {$data   = @()}
+    process {$data  += $inputObject }
     end {
-        #Will use most of the parameters with Measure-Object
-        $params = @{} + $PSBoundParameters
-        [void]$params.Remove('InputObject')
-        [void]$params.Remove('GroupByName')
-        [void]$params.Remove('ValueName')
-        [void]$params.Remove('Count')
-        [void]$params.Remove('NoSuffix')
-        if ($IgnoreWhiteSpace -and -not ($Line -or $Character -or $Word)) {$params['Character']=$true}
-        if ($params.Keys.Count -gt 1 -and $NoSuffix) {Write-Warning "NoSuffix ignored whene there are multiple aggregations"}
+        #Allow switches for common options
+         if ((-not $PSBoundParameters["AggregateFunction"]) -and ($Minimum -or $Maximum -or $Count -or $AllStats -or $Average -or $StandardDeviation -or $sum -or $Character -or $line -or $word )) {
+            $AggregateFunction = @()
+        }
+        if ($Minimum -and $AggregateFunction -notcontains "Min" ) {$AggregateFunction += "Min"}
+        if ($Maximum -and $AggregateFunction -notcontains "Max" ) {$AggregateFunction += "Max"}
+        foreach ($p in @("Count", "AllStats", "Average", "StandardDeviation", "Sum", "Character", "Line", "Word")) {
+            if ($PSBoundParameters[$p] -and $AggregateFunction -notcontains $P) {$AggregateFunction += $p}
+        }
+        if ($AggregateFunction.Count -gt 1 -and $GroupByName.count -gt 1 -and $SimpleName) {
+            Write-Warning "NoPrefix ignored whene there are multiple aggregations"
+        }
+        $measureParams = $AggregateFunction.where({$_ -in    ("Line", "Character", "Word") })
+        if     ($IgnoreWhiteSpace -and -not $measureParams) {$measureParams = @('Character', 'IgnoreWhiteSpace' ) }
+        elseif ($IgnoreWhiteSpace ) {$measureParams += 'IgnoreWhiteSpace' }
+        $groupParams = $AggregateFunction.where({$_ -Notin ("Line", "Character", "Word", "AllStats") })
+        if ($AggregateFunction -contains 'AllStats') {$groupParams = "Min", "Max", "Average", "STD", "Sum", "Count"}
         $data | Group-Object -Property $GroupByName | ForEach-Object {
             $newobj = [Ordered]@{}
             #For whatever we grouped on, get that value/those values from the first row of each group. Then total the properties we're interested in
@@ -82,24 +93,25 @@ function Get-Subtotal  {
             }
             foreach ($v in $ValueName)   {
                 #Some objects may not have all the properties e.g. Dir | measure length
-                $totals =  $_.Group | Measure-object -Property $v @params -ErrorAction SilentlyContinue
-                if ($PSCmdlet.ParameterSetName -eq 'Chars') {#paramter is word/line/character, but property is words/lines/characters
-                    foreach ($agFn  in $params.Keys.where({$_  -ne 'IgnoreWhiteSpace'}))  {
-                                 $newObj[($v + "_" + $agfn + "s")] = $totals."$agFn`s"
+                if ($measureParams) {
+                    $totals =  $_.Group | Measure-object -Property $v @measureParams -ErrorAction SilentlyContinue
+                    foreach ($agFn  in $measureParams.Keys.where({$_  -ne 'IgnoreWhiteSpace'}))  {
+                        $newObj[($v + "_" + $agfn + "s")] = $totals."$agFn`s"
                     }
                 }
-                else {
-                    if (-not $AllStats) {
-                            if ($count) {$newObj[($v + "_Count" )]    = $totals.count}
-                            $agFunctions = $params.Keys
+                elseif ($groupParams) {
+                    if     ($groupParams.Count -eq 1 -and $SimpleName) {
+                            $agFn = $groupParams[0]
+                            $newObj[$v] = $_.$agFn($v)
                     }
-                    else {  $agFunctions = "Count","Average","Sum","Maximum","Minimum","StandardDeviation"}
-                    if ($agfunctions.Count -eq 1 -and $NoSuffix) {
-                        $newObj[$v] = $totals.($agFunctions[0])
+                    elseif ($GroupByName.count -eq 1 -and $SimpleName) {
+                        foreach ($agFn in $groupParams)  {
+                            $newObj[$agfn] = $_.$agFn($v)
+                        }
                     }
                     else {
-                        foreach ($agFn in $agFunctions)  {
-                                 $newObj[($v + "_" + $agfn )] = $totals.$agFn
+                        foreach ($agFn in $groupParams)  {
+                            $newObj[($agfn + "_" + $v )] = $_.$agFn($v)
                         }
                     }
                 }

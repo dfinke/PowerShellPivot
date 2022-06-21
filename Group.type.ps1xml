@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type><Name>Microsoft.PowerShell.Commands.GroupInfo</Name>
+    <Members>
+      <ScriptMethod><Name>Average</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            #convert to property to double remove nulls, blanks and non convertables. Leave any NaN Same for all the following methods
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Mean($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Count</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            ($this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}).count
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Entropy</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Entropy($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>GeometricMean</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::GeometricMean($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>HarmonicMean</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::HarmonicMean($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+
+      <ScriptMethod><Name>LowerQuartile</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 0
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::LowerQuartile($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>UpperQuartile</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 0
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::UpperQuartile($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Quantile</Name><Script>
+           Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [double]$Tau,
+                [MathNet.Numerics.Statistics.QuantileDefinition]$Definition = [MathNet.Numerics.Statistics.QuantileDefinition]::Median,
+                [int]$Round = 0
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [mathnet.Numerics.Statistics.Statistics]::QuantileCustom($Values,$Tau,$Definition)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Mean</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Mean($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Max</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Maximum($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Min</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Minimum($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Median</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Median($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>RootMeanSquare</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::RootMeanSquare($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>std</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $s = $sumOfDerivation = 0
+            foreach ($num in $Values) { $s += $num ; $sumOfDerivation += $num * $num  }
+            $average = $s / $Values.Count
+            $sumOfDerivationAverage = $sumOfDerivation / $values.Count
+            $result =  [math]::Sqrt($sumOfDerivationAverage - ($average * $average))
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>sum</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            $Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            [double]$result = 0
+            foreach ($num in $Values) {
+                try {if (-not [double]::isNan($num)) {$result += $num} }
+                catch {write-verbose "Non numeric value $num ignored."}
+            }
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>StandardDeviation</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            #square root of Variance
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::StandardDeviation($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+    <ScriptMethod><Name>PopulationStandardDeviation</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            #square root of Population Variance
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::PopulationStandardDeviation($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>Variance</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            #sample variance  (sum of (value-average)^2) / (count-1)
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::Variance($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+      <ScriptMethod><Name>PopulationVariance</Name><Script>
+            Param (
+                [parameter(Mandatory=$true)]
+                [string]$Property,
+                [int]$Round = 3
+            )
+            #Population sample variance  (sum of (value-average)^2) / (count)
+            [Double[]]$Values = $this.Group | ForEach-Object {$_.$Property -as [double]} | Where-Object {$null -ne $_}
+            $result = [MathNet.Numerics.Statistics.Statistics]::PopulationVariance($Values)
+            if ($Round) {[Math]::round($Result,$Round)} else {$result}
+      </Script></ScriptMethod>
+    </Members>
+  </Type>
+</Types>
