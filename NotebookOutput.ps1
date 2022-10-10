@@ -4,6 +4,7 @@
 #>
 
 using namespace "Microsoft.DotNet.Interactive"
+using namespace "Microsoft.DotNet.Interactive.Commands"
 
 function Write-Notebook {
   <#
@@ -375,57 +376,57 @@ function Write-Progress {
   }
 }
 
-function Out-Mermaid {
-  <#
-      .DESCRIPTION
-        Accepts a mermaid chart definition as a parameter (example with the definition) or from the  pipeline
-        and outputs the minimum correct HTML / Javascript but  **depends on the kernel extension being loaded**
+# function Out-Mermaid {
+#   <#
+#       .DESCRIPTION
+#         Accepts a mermaid chart definition as a parameter (example with the definition) or from the  pipeline
+#         and outputs the minimum correct HTML / Javascript but  **depends on the kernel extension being loaded**
 
-        For examples see the mermaid home page at https://mermaid-js.github.io/mermaid/#/
-        Has an alias of `Mermaid` it can be called in a more dsl-y style);
+#         For examples see the mermaid home page at https://mermaid-js.github.io/mermaid/#/
+#         Has an alias of `Mermaid` it can be called in a more dsl-y style);
 
-        .EXAMPLE
-        ps >Mermaid @'
-        sequenceDiagram
-            participant Alice
-            participant Bob
-            Alice->>John: Hello John, how are you?
-            loop Healthcheck
-                John->>John: Fight against hypochondria
-            end
-            Note right of John: Rational thoughts <br/>prevail!
-            John-->>Alice: Great!
-            John->>Bob: How about you?
-            Bob-->>John: Jolly good!
-        '@
+#         .EXAMPLE
+#         ps >Mermaid @'
+#         sequenceDiagram
+#             participant Alice
+#             participant Bob
+#             Alice->>John: Hello John, how are you?
+#             loop Healthcheck
+#                 John->>John: Fight against hypochondria
+#             end
+#             Note right of John: Rational thoughts <br/>prevail!
+#             John-->>Alice: Great!
+#             John->>Bob: How about you?
+#             Bob-->>John: Jolly good!
+#         '@
 
-        Outputs a sample diagram found on the mermaid home page
-    #>
-  [alias('Mermaid')]
-  param   (
-    [parameter(ValueFromPipeline = $true, Mandatory = $true, Position = 0)]
-    $Text
-  )
-  begin {
-    $mermaid = ""
-    $guid = ([guid]::NewGuid().ToString() -replace '\W', '')
-    $html = @"
-<div style="background-color:white;"><script type="text/javascript">
-loadMermaid_$guid = () => {(require.config({ 'paths': { 'context': '1.0.252001', 'mermaidUri' : 'https://colombod.github.io/dotnet-interactive-cdn/extensionlab/1.0.252001/mermaid/mermaidapi', 'urlArgs': 'cacheBuster=7de2aec4927849b5a989d2305cf957bc' }}) || require)(['mermaidUri'], (mermaid) => {let renderTarget = document.getElementById('$guid'); mermaid.render( 'mermaid_$guid', ``~~Mermaid~~``, g => {renderTarget.innerHTML = g  });}, (error) => {console.log(error);});}
-if ((typeof(require) !==  typeof(Function)) || (typeof(require.config) !== typeof(Function))) {
-    let require_script = document.createElement('script');
-    require_script.setAttribute('src', 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js');
-    require_script.setAttribute('type', 'text/javascript');
-    require_script.onload = function() {loadMermaid_$guid();};
-    document.getElementsByTagName('head')[0].appendChild(require_script);
-}
-else {loadMermaid_$guid();}
-</script><div id="$guid"></div></div>
-"@  
-  }
-  process { $Mermaid += ("`r`n" + $Text -replace '^[\r\n]+', '' -replace '[\r\n]+$', '') }
-  end { Write-Notebook -Html  ($html -replace '~~Mermaid~~', $mermaid ) }
-}
+#         Outputs a sample diagram found on the mermaid home page
+#     #>
+#   [alias('Mermaid')]
+#   param   (
+#     [parameter(ValueFromPipeline = $true, Mandatory = $true, Position = 0)]
+#     $Text
+#   )
+#   begin {
+#     $mermaid = ""
+#     $guid = ([guid]::NewGuid().ToString() -replace '\W', '')
+#     $html = @"
+# <div style="background-color:white;"><script type="text/javascript">
+# loadMermaid_$guid = () => {(require.config({ 'paths': { 'context': '1.0.252001', 'mermaidUri' : 'https://colombod.github.io/dotnet-interactive-cdn/extensionlab/1.0.252001/mermaid/mermaidapi', 'urlArgs': 'cacheBuster=7de2aec4927849b5a989d2305cf957bc' }}) || require)(['mermaidUri'], (mermaid) => {let renderTarget = document.getElementById('$guid'); mermaid.render( 'mermaid_$guid', ``~~Mermaid~~``, g => {renderTarget.innerHTML = g  });}, (error) => {console.log(error);});}
+# if ((typeof(require) !==  typeof(Function)) || (typeof(require.config) !== typeof(Function))) {
+#     let require_script = document.createElement('script');
+#     require_script.setAttribute('src', 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js');
+#     require_script.setAttribute('type', 'text/javascript');
+#     require_script.onload = function() {loadMermaid_$guid();};
+#     document.getElementsByTagName('head')[0].appendChild(require_script);
+# }
+# else {loadMermaid_$guid();}
+# </script><div id="$guid"></div></div>
+# "@  
+#   }
+#   process { $Mermaid += ("`r`n" + $Text -replace '^[\r\n]+', '' -replace '[\r\n]+$', '') }
+#   end { Write-Notebook -Html  ($html -replace '~~Mermaid~~', $mermaid ) }
+# }
 
 function Out-TreeView {
   <#
@@ -572,5 +573,35 @@ function Out-TreeView {
     }
     elseif ($Display) { Write-Notebook -Html ($outputHtml + $treeViewCss) }
     else { [Kernel]::HTML( $outputHtml) }
+  }
+}
+
+function Out-Mermaid {
+  <#
+      .DESCRIPTION
+        Accepts a mermaid chart definition as a parameter (example with the definition) or from the  pipeline
+        and outputs the minimum correct HTML / Javascript but  **depends on the kernel extension being loaded**
+
+        For examples see the mermaid home page at https://mermaid-js.github.io/mermaid/#/
+        Has an alias of `Mermaid` it can be called in a more dsl-y style);  
+        
+        .Example
+@'
+    graph TD
+        A-->B
+        A-->C
+        B-->D
+        C-->D
+'@ | Out-Mermaid
+  #>
+
+  param(
+    [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline)]
+    $Graph
+  )
+
+  Process {
+    $command = [Microsoft.DotNet.Interactive.Commands.SubmitCode]::new($Graph, "mermaid")
+    $null = [Microsoft.DotNet.Interactive.Kernel]::Root.SendAsync($command)
   }
 }
