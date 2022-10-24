@@ -1,5 +1,6 @@
-# Change log
+## v0.8.2
 
+- Added Invoke-JSONNormalize - Normalize semi-structured JSON data into a flat table
 ## v0.8.1
 
 Thank you to James O'Neill
