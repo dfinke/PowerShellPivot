@@ -18,10 +18,14 @@ function Invoke-JSONNormalize {
     else {        
         foreach ($topLevel in $data) {
             foreach ($record in $topLevel.$recordPath) {
+                # PSCustomObject does not support the Clone() method
+                # Need to copy the object to avoid modifying the original
+                $newRecord = $record.psobject.Copy()
+
                 foreach ($metaItem in $meta) {
-                    $record | Add-Member -MemberType NoteProperty -Name $metaItem -Value $topLevel.$metaItem -Force
+                    $newRecord | Add-Member -MemberType NoteProperty -Name $metaItem -Value $topLevel.$metaItem -Force
                 }
-                $record
+                $newRecord
             }
         }
     }

@@ -72,8 +72,17 @@ Describe "Tests Get AggregateFunctionNames" -Tag InvokeJSONNormalize {
 
     It 'Should return data with multiple calls' {
         $actual = Invoke-JSONNormalize -data $tvShows -recordPath episodes -meta network
-        $actual = Invoke-JSONNormalize -data $tvShows -recordPath episodes -meta network,show
+        $actual = Invoke-JSONNormalize -data $tvShows -recordPath episodes -meta network, show
 
         $actual.Count | Should -Be 482
+    }
+
+    It "Should not have a network property on the second call" {
+        $actual = Invoke-JSONNormalize -data $tvShows -recordPath episodes -meta network
+        $actual = Invoke-JSONNormalize -data $tvShows -recordPath episodes 
+
+        $names = $actual[0].psobject.Properties.Name
+        $names.Count | Should -Be 4
+        $names -eq 'network' | Should -BeNullOrEmpty
     }
 }
