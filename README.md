@@ -22,6 +22,15 @@ Install the PowerShell module from the gallery.
 Install-Module -Name PowerShellPivot
 ```
 
+## Invoke-JSONNormalize
+
+Normalize semi-structured JSON data into a flat table.
+
+
+[Check out the example here.](Examples/tryInvoke-JSONNormalize.ps1)
+
+## Pivot table
+
 It supports a single dimension, multiple values, and these stats:
 
 |Name|Description|
