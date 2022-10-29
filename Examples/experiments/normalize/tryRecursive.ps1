@@ -24,7 +24,7 @@ function theListing {
         $name
     )
 
-    $result = @{}
+    $result = New-Object System.Collections.ArrayList
 
     $valueTypes = $target.psobject.properties.name | Where-Object { $target.$_ -isnot [pscustomobject] -and $target.$_ -isnot [array] } | ForEach-Object { $_ }
 
@@ -37,11 +37,11 @@ function theListing {
         else {
             $keyName = $vt
         }
-
-        $result["$keyName"] = $target.$vt
+        
+        $null = $result.add(@{ "$keyName" = $target.$vt })
     }
 
-    foreach ($co in $customObjects) {        
+    foreach ($co in $customObjects) {
         if (!$name) {
             $name = $co
         }
@@ -63,10 +63,10 @@ function Invoke-Normalize {
 
     $result = theListing $target
 
-    $final = @{}
+    $final = [ordered]@{}
 
-    for ($idx = $result.Count - 1; $idx -ge 0; $idx--) {                
-        $final += $result[$idx]
+    foreach ($item in $result) {
+        $final += $item
     }
 
     [PSCustomObject]$final
@@ -77,8 +77,11 @@ function Invoke-Normalize {
 # Invoke-Normalize $data
 
 # $d = Get-Content $PSScriptRoot\tv_shows.json | convertfrom-json
-# Invoke-Normalize ($d.shows | Select-Object -first 1 ) 
+# Invoke-Normalize ($d.shows | Select-Object -first 1 )
 
+# $d = Get-Content $PSScriptRoot\SimpleRecords.json | ConvertFrom-Json
+# Invoke-Normalize $d
+# return 
 $s = @"
 {
     "A": {
@@ -92,6 +95,14 @@ $s = @"
     "C": {
         "A": 5,
         "B": 6
+    },
+    "D": {
+        "A": 7,
+        "B": 8,
+        "E": {
+            "A": 9,
+            "B": 10
+        }
     }
 }
 "@
