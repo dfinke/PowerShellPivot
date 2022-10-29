@@ -1,79 +1,79 @@
-# https://lonewolfonline.net/simple-directory-listing/#:~:text=Recursive%20directory%20listing%20in%20C%23%20and%20get%20a,one%20parameter%2C%20the%20directory%20to%20start%20looking%20in.
+# # https://lonewolfonline.net/simple-directory-listing/#:~:text=Recursive%20directory%20listing%20in%20C%23%20and%20get%20a,one%20parameter%2C%20the%20directory%20to%20start%20looking%20in.
 
-$json = @"
-{
-    'school': 'ABC primary school',
-    'location': 'London',
-    'ranking': 2,
-    'info': {
-        'president': 'John Kasich',
-        'contacts': {
-          'email': {
-              'admission': 'admission@abc.com',
-              'general': 'info@abc.com'
-          },
-          'tel': '123456789',
-      }
-    }
-}
-"@
+# $json = @"
+# {
+#     'school': 'ABC primary school',
+#     'location': 'London',
+#     'ranking': 2,
+#     'info': {
+#         'president': 'John Kasich',
+#         'contacts': {
+#           'email': {
+#               'admission': 'admission@abc.com',
+#               'general': 'info@abc.com'
+#           },
+#           'tel': '123456789',
+#       }
+#     }
+# }
+# "@
 
-function theListing {
-    param(
-        $target,
-        $name
-    )
+# function theListing {
+#     param(
+#         $target,
+#         $name
+#     )
 
-    $result = [ordered]@{}    
-    $valueTypes = $target.psobject.properties.name | Where-Object { $target.$_ -isnot [pscustomobject] -and $target.$_ -isnot [array]  } | ForEach-Object { $_ }        
-    $customObjects = $target.psobject.properties.name | Where-Object { $target.$_ -is [pscustomobject] -or $target.$_ -is [array] } | ForEach-Object { $_ }        
+#     $result = [ordered]@{}    
+#     $valueTypes = $target.psobject.properties.name | Where-Object { $target.$_ -isnot [pscustomobject] -and $target.$_ -isnot [array]  } | ForEach-Object { $_ }        
+#     $customObjects = $target.psobject.properties.name | Where-Object { $target.$_ -is [pscustomobject] -or $target.$_ -is [array] } | ForEach-Object { $_ }        
 
-    foreach ($vt in $valueTypes) {
-        if ($name) {
-            $keyName = "{0}.{1}" -f $name, $vt
-        }
-        else {
-            $keyName = $vt
-        }
+#     foreach ($vt in $valueTypes) {
+#         if ($name) {
+#             $keyName = "{0}.{1}" -f $name, $vt
+#         }
+#         else {
+#             $keyName = $vt
+#         }
 
-        $result["$keyName"] = $target.$vt
-    }
+#         $result["$keyName"] = $target.$vt
+#     }
 
-    foreach ($co in $customObjects) {        
-        if (!$name) {
-            $name = $co
-        }
-        else {
-            $name = "{0}.{1}" -f $name, $co
-        }
+#     foreach ($co in $customObjects) {        
+#         if (!$name) {
+#             $name = $co
+#         }
+#         else {
+#             $name = "{0}.{1}" -f $name, $co
+#         }
 
-        theListing $target.$co $name
-    }
+#         theListing $target.$co $name
+#     }
 
-    return $result
-}
+#     return $result
+# }
 
-function Invoke-Normalize {
-    param(
-        $target
-    )
+# function Invoke-Normalize {
+#     param(
+#         $target
+#     )
 
-    $result = theListing $target
+#     $result = theListing $target
 
-    $final = [ordered]@{}
+#     $final = [ordered]@{}
 
-    for ($idx = $result.Count - 1; $idx -ge 0; $idx--) {                
-        $final += $result[$idx]
-    }
+#     for ($idx = $result.Count - 1; $idx -ge 0; $idx--) {                
+#         $final += $result[$idx]
+#     }
 
-    [PSCustomObject]$final
-}
+#     [PSCustomObject]$final
+# }
 
-# $data = ConvertFrom-Json -InputObject $json
-# Clear-Host
-# Invoke-Normalize $data
+# # $data = ConvertFrom-Json -InputObject $json
+# # Clear-Host
+# # Invoke-Normalize $data
 
 
-$d = Get-Content .\__tests__\tv_shows.json | convertfrom-json
+# $d = Get-Content .\__tests__\tv_shows.json | convertfrom-json
 
-Invoke-Normalize ($d.shows | Select-Object -first 1)
+# Invoke-Normalize ($d.shows | Select-Object -first 1)
