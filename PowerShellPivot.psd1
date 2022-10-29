@@ -6,7 +6,7 @@
     RootModule         = 'PowerShellPivot.psm1'
 
     # Version number of this module.
-    ModuleVersion      = '0.8.1'
+    ModuleVersion      = '0.8.2'
 
     # ID used to uniquely identify this module
     GUID               = '1cda4a74-bf30-4619-b22a-5b682b19a45b'
@@ -27,11 +27,12 @@ PowerShell module to reshape data (produce a "pivot" table) based on column valu
 
     # Functions to export from this module
     FunctionsToExport  = @(
+        'ConvertTo-CrossTab',
         'Get-AggregateFunctionNames',
-        'Invoke-PSMelt',
-        'New-PSPivotTable',
         'Get-SubTotal',
-        'ConvertTo-CrossTab'
+        'Invoke-JSONNormalize',
+        'Invoke-PSMelt',
+        'New-PSPivotTable'
     )
 
     # Aliases to export from this module
